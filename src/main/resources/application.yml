@@ -1,0 +1,31 @@
+api:
+  seoul:
+    key: 6852626444656e743130334f4e786972 # ??? ?? ???? ????.
+    base-url: http://openAPI.seoul.go.kr:8088
+    timeout: 10000  # 10초
+    retry-count: 3  # 최대 3회 재시도
+    retry-delay: 1000  # 첫 시도 후 1초, 그 다음 2초, 3초...
+
+poi:
+  fetch:
+    onstartup: true
+    page-size: 1000
+    max-pages: 5
+    mode: incremental  # "full" 또는 "incremental"
+  default:
+    category-id: 1
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bikeoasis
+    username: postgres
+    password: 9792
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+
+logging:
+  level:
+    com.bikeoasis: INFO
