@@ -150,52 +150,32 @@ public class LocationService {
     }
 
     /**
-     * 사용자의 이동 거리 계산 (SimpleSQL: ST_DistanceSphere 사용)
-     * 최근 N개 위치로부터 총 이동 거리를 계산합니다.
+     * 사용자의 이동 거리 계산 (PostGIS 사용)
+     * ST_DistanceSphere를 사용하여 DB에서 직접 거리 계산
      */
     public double calculateTravelDistance(Long userId, int limit) {
-        log.info("사용자 {} 이동 거리 계산 (최근 {} 개)", userId, limit);
+        log.info("사용자 {} 이동 거리 계산 (최근 {} 개, PostGIS 사용)", userId, limit);
 
-        List<LocationResponse> locations = getLastNLocations(userId, limit);
+        // 사용자 존재 확인
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. userId: " + userId));
+
+        List<UserLocation> locations = userLocationRepository.findLastNLocationsByUserId(
+                userId, PageRequest.of(0, limit)
+        );
 
         if (locations.size() < 2) {
             log.warn("이동 거리 계산에 필요한 충분한 위치 데이터가 없습니다");
             return 0.0;
         }
 
-        double totalDistance = 0.0;
-        for (int i = 0; i < locations.size() - 1; i++) {
-            LocationResponse current = locations.get(i);
-            LocationResponse next = locations.get(i + 1);
-
-            double distance = calculateHaversineDistance(
-                    current.getLatitude(), current.getLongitude(),
-                    next.getLatitude(), next.getLongitude()
-            );
-            totalDistance += distance;
-        }
+        // PostGIS를 사용한 거리 계산
+        double totalDistance = userLocationRepository.calculateTravelDistancePostGIS(userId, limit);
 
         log.info("총 이동 거리: {} 미터", totalDistance);
         return totalDistance;
     }
 
-    /**
-     * Haversine 공식을 사용한 두 점 사이의 거리 계산 (미터 단위)
-     */
-    private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int EARTH_RADIUS = 6371000; // 미터
-
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return EARTH_RADIUS * c;
-    }
 
     /**
      * 사용자 위치 이력 삭제 (GDPR 대응, 30일 이상 된 데이터)

@@ -58,6 +58,12 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
     Optional<Poi> findByExternalId(String externalId);
 
     /**
+     * 외부 ID 리스트로 일괄 조회 (Bulk 동기화 최적화)
+     * N+1 쿼리 문제 해결
+     */
+    List<Poi> findByExternalIdIn(List<String> externalIds);
+
+    /**
      * 지정된 시간 이후 동기화된 데이터 조회
      */
     List<Poi> findByLastSyncedAtAfter(LocalDateTime lastSyncTime);

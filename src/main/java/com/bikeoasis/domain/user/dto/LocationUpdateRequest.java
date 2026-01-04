@@ -55,6 +55,7 @@ public class LocationUpdateRequest {
      * 현재 위치 여부
      */
     @JsonProperty("is_current")
+    @Builder.Default
     private Boolean isCurrent = true;
 
     public boolean isValid() {

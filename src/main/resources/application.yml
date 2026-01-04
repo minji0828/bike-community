@@ -15,6 +15,14 @@ poi:
   default:
     category-id: 1
 
+location:
+  # 위치 데이터 보관 기간 (일)
+  retention-days: 30
+  # 위치 업데이트 최소 간격 (초)
+  min-update-interval: 5
+  # 배치 처리 크기
+  batch-size: 100
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/bikeoasis
@@ -25,7 +33,24 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        # ===== JPA 배치 처리 최적화 =====
+        # saveAll()이 호출될 때 여러 INSERT/UPDATE를 배치로 처리
+        jdbc:
+          batch_size: 100        # 배치 크기: 한 번에 100개씩 처리
+          fetch_size: 50          # 조회 배치 사이즈
+          batch_versioned_data: true  # 버전 컬럼 배치 처리
+        order_inserts: true       # INSERT 최적화
+        order_updates: true       # UPDATE 최적화
+        generate_statistics: false # 성능 모니터링 (필요시 true로 변경)
+
+        # ===== 기타 성능 최적화 =====
+        show_sql: false           # SQL 로깅 (필요시만 true)
+        format_sql: false         # SQL 포맷팅
+        use_sql_comments: false   # SQL 주석
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 logging:
   level:
     com.bikeoasis: INFO
+    com.bikeoasis.domain.user: DEBUG
+    # org.hibernate.SQL: DEBUG  # SQL 로깅 (필요시 활성화)
