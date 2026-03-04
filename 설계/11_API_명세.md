@@ -60,8 +60,14 @@
 
 MVP는 인증을 단순화할 수 있지만, 민감 데이터(위치/경로)는 안전장치를 염두에 둔다.
 
-- (vNext 권장) `Authorization: Bearer <token>`
+- (MVP2+ 권장) `Authorization: Bearer <token>`
 - (MVP 권장) 익명 식별이 필요하면 `X-Device-UUID: <uuid>`
+
+메모:
+
+- MVP2(카카오 로그인 + 댓글) 인증/토큰/엔드포인트는 아래 문서에서 확정한다.
+  - `설계/21_인증_카카오_OIDC.md`
+  - `설계/19_MVP2_커뮤니티_API_명세.md`
 
 ## 1. POI API
 
@@ -124,6 +130,10 @@ Request body: `PointDto[]`
 
 - POST `/api/v1/ridings`
 
+추적/샘플링/다운샘플링 정책:
+
+- `설계/23_라이딩_GPS_추적_기록_설계.md`
+
 Request: `RidingCreateRequest`
 
 ```json
@@ -146,6 +156,11 @@ Response (권장)
 ```json
 { "code": 200, "message": "success", "data": { "ridingId": 123 } }
 ```
+
+현재 구현 메모:
+
+- 현재 서버 구현은 `ridingId`(Long) 숫자를 그대로 반환한다(plain number/text).
+- 추후 `ApiResponse`로 통일하는 것을 권장한다.
 
 ## 3. Location API
 
@@ -304,7 +319,28 @@ Response:
 - Content-Type: `application/gpx+xml`
 - Body: GPX XML 원문
 
-## 5. Admin/Backoffice API(초안)
+## 5. Meetup API(MVP3 착수)
+
+- 상세 설계: `설계/22_MVP3_모임_채팅_설계.md`
+
+엔드포인트(고정):
+
+- POST `/api/v1/courses/{courseId}/meetups`
+- GET `/api/v1/courses/{courseId}/meetups?status=open`
+- GET `/api/v1/meetups/{meetupId}`
+- POST `/api/v1/meetups/{meetupId}/join`
+- POST `/api/v1/meetups/{meetupId}/leave`
+
+인증:
+
+- 생성/join/leave는 Bearer JWT 필요
+- list/detail은 공개 조회 가능
+
+동시성:
+
+- join은 정원(capacity) 조건을 row-level lock으로 보호한다.
+
+## 6. Admin/Backoffice API(초안)
 
 > MVP는 UI 없이도 관리 가능한 수준의 API만 있어도 된다.
 
