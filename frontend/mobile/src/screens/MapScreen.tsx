@@ -1,10 +1,11 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Marker, Region } from '../components/MapWrapper';
 
 import { getNearbyToilets } from '../api/bikeoasis';
 import { useSettingsStore } from '../state/settingsStore';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import type { Toilet } from '../types/bikeoasis';
 
 const DEFAULT_REGION: Region = {
@@ -15,28 +16,27 @@ const DEFAULT_REGION: Region = {
 };
 
 export default function MapScreen() {
-  const mapRef = useRef<MapView | null>(null);
+  const mapRef = useRef<any | null>(null);
 
   const nearbyRadiusMeters = useSettingsStore((s) => s.nearbyRadiusMeters);
   const setNearbyRadiusMeters = useSettingsStore((s) => s.setNearbyRadiusMeters);
 
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
-  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [currentLatLon, setCurrentLatLon] = useState<{ lat: number; lon: number } | null>(null);
   const [toilets, setToilets] = useState<Toilet[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const canFetch = useMemo(
-    () => permissionGranted === true && currentLatLon !== null,
-    [permissionGranted, currentLatLon]
-  );
+  const canFetch = useMemo(() => currentLatLon !== null, [currentLatLon]);
 
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       const granted = status === 'granted';
       setPermissionGranted(granted);
-      if (!granted) return;
+      if (!granted) {
+        setCurrentLatLon({ lat: DEFAULT_REGION.latitude, lon: DEFAULT_REGION.longitude });
+        return;
+      }
 
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
@@ -52,11 +52,11 @@ export default function MapScreen() {
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       };
-      setRegion(nextRegion);
       mapRef.current?.animateToRegion(nextRegion, 400);
     })().catch((e) => {
       setPermissionGranted(false);
-      Alert.alert('Location error', String(e?.message ?? e));
+      setCurrentLatLon({ lat: DEFAULT_REGION.latitude, lon: DEFAULT_REGION.longitude });
+      Alert.alert('위치 오류', String(e?.message ?? e));
     });
   }, []);
 
@@ -71,7 +71,7 @@ export default function MapScreen() {
       });
       setToilets(data);
     } catch (e: any) {
-      Alert.alert('Fetch failed', String(e?.message ?? e));
+      Alert.alert('조회 실패', String(e?.message ?? e));
     } finally {
       setLoading(false);
     }
@@ -92,13 +92,11 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <MapView
-        ref={(r) => {
+        ref={(r: any) => {
           mapRef.current = r;
         }}
         style={styles.map}
         initialRegion={DEFAULT_REGION}
-        region={region}
-        onRegionChangeComplete={setRegion}
         showsUserLocation={permissionGranted === true}
       >
         {toilets.map((t) => (
@@ -113,24 +111,24 @@ export default function MapScreen() {
 
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Nearby toilets</Text>
-          <Text style={styles.cardMeta}>Radius: {nearbyRadiusMeters} m</Text>
+          <Text style={styles.cardTitle}>주변 화장실</Text>
+          <Text style={styles.cardMeta}>반경: {nearbyRadiusMeters}m</Text>
           <View style={styles.row}>
             <Pressable style={styles.smallButton} onPress={() => bumpRadius(-250)}>
               <Text style={styles.smallButtonText}>-</Text>
             </Pressable>
             <Pressable style={styles.primaryButton} onPress={fetchNearby}>
-              <Text style={styles.primaryButtonText}>Refresh</Text>
+              <Text style={styles.primaryButtonText}>새로고침</Text>
             </Pressable>
             <Pressable style={styles.smallButton} onPress={() => bumpRadius(250)}>
               <Text style={styles.smallButtonText}>+</Text>
             </Pressable>
           </View>
-          <Text style={styles.cardMeta}>Results: {toilets.length}</Text>
+          <Text style={styles.cardMeta}>검색 결과: {toilets.length}개</Text>
           {loading ? <ActivityIndicator style={{ marginTop: 8 }} /> : null}
           {permissionGranted === false ? (
             <Text style={styles.warnText}>
-              Location permission is required to show nearby results.
+              위치 권한이 없어서 서울 시청 기준으로 조회합니다.
             </Text>
           ) : null}
         </View>
@@ -140,43 +138,43 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0f14' },
+  container: { flex: 1, backgroundColor: colors.bg },
   map: { flex: 1 },
   overlay: {
     position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 12,
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
     elevation: 4,
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#101827' },
-  cardMeta: { marginTop: 4, fontSize: 12, color: '#445066' },
-  warnText: { marginTop: 8, fontSize: 12, color: '#8a2b2b' },
-  row: { marginTop: 10, flexDirection: 'row', gap: 8, alignItems: 'center' },
+  cardTitle: { fontSize: typography.h2, fontWeight: '800', color: colors.ink },
+  cardMeta: { marginTop: spacing.xs, fontSize: typography.caption, color: '#35507a' },
+  warnText: { marginTop: spacing.sm, fontSize: typography.caption, color: colors.danger },
+  row: { marginTop: spacing.sm, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   smallButton: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#e7edf6',
+    borderRadius: radius.md,
+    backgroundColor: colors.softBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  smallButtonText: { fontSize: 18, fontWeight: '800', color: '#1a2a44' },
+  smallButtonText: { fontSize: 18, fontWeight: '900', color: colors.primaryDeep },
   primaryButton: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#1a2a44',
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryButtonText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
+  primaryButtonText: { fontSize: typography.body, fontWeight: '800', color: '#ffffff' },
 });

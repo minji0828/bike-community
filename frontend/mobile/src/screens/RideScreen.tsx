@@ -3,15 +3,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import MapView, { Marker, Polyline, Region } from 'react-native-maps';
+import MapView, { Marker, Polyline, Region } from '../components/MapWrapper';
 
-import { createRiding, getToiletsAlongRoute } from '../api/bikeoasis';
+import { createCourse, createRiding, getToiletsAlongRoute } from '../api/bikeoasis';
 import { useSettingsStore } from '../state/settingsStore';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import type { PointDto, Toilet } from '../types/bikeoasis';
 import { haversineMeters, formatMeters } from '../utils/distance';
 import { downsample } from '../utils/downsample';
@@ -30,7 +32,7 @@ function nowMs() {
 }
 
 export default function RideScreen() {
-  const mapRef = useRef<MapView | null>(null);
+  const mapRef = useRef<any | null>(null);
   const watchSubRef = useRef<Location.LocationSubscription | null>(null);
 
   const hasHydrated = useSettingsStore((s) => s.hasHydrated);
@@ -38,7 +40,6 @@ export default function RideScreen() {
   const userId = useSettingsStore((s) => s.userId);
   const routeRadiusMeters = useSettingsStore((s) => s.routeRadiusMeters);
 
-  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [status, setStatus] = useState<RideStatus>('idle');
   const [path, setPath] = useState<PointDto[]>([]);
@@ -48,6 +49,7 @@ export default function RideScreen() {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [busy, setBusy] = useState(false);
   const [rideId, setRideId] = useState<number | null>(null);
+  const [courseId, setCourseId] = useState<number | null>(null);
 
   const canStart = useMemo(() => {
     if (!hasHydrated) return false;
@@ -81,7 +83,37 @@ export default function RideScreen() {
     if (!canStart) return;
     const granted = (permissionGranted === true) || (await requestPermission());
     if (!granted) {
-      Alert.alert('Permission required', 'Location permission is required to start a ride.');
+      if (Platform.OS === 'web') {
+        const demoPath: PointDto[] = [
+          { lat: 37.5665, lon: 126.978 },
+          { lat: 37.5671, lon: 126.9793 },
+          { lat: 37.5678, lon: 126.9804 },
+        ];
+        const demoDistance =
+          haversineMeters(demoPath[0], demoPath[1]) + haversineMeters(demoPath[1], demoPath[2]);
+
+        setRideId(null);
+        setToilets([]);
+        setCourseId(null);
+        setPath(demoPath);
+        setDistanceMeters(demoDistance);
+        setElapsedSec(180);
+        setStartAtMs(nowMs() - 180000);
+        setStatus('stopped');
+        mapRef.current?.animateToRegion(
+          {
+            latitude: demoPath[0].lat,
+            longitude: demoPath[0].lon,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          400
+        );
+        Alert.alert('웹 테스트 모드', '위치 권한 없이 데모 경로를 생성했습니다. 바로 제출 테스트가 가능합니다.');
+        return;
+      }
+
+      Alert.alert('권한 필요', '라이딩을 시작하려면 위치 권한이 필요합니다.');
       return;
     }
 
@@ -108,7 +140,6 @@ export default function RideScreen() {
       latitudeDelta: 0.01,
       longitudeDelta: 0.01,
     };
-    setRegion(nextRegion);
     mapRef.current?.animateToRegion(nextRegion, 400);
 
     watchSubRef.current?.remove();
@@ -149,6 +180,7 @@ export default function RideScreen() {
     watchSubRef.current = null;
     setStatus('idle');
     setRideId(null);
+    setCourseId(null);
     setToilets([]);
     setPath([]);
     setDistanceMeters(0);
@@ -156,17 +188,51 @@ export default function RideScreen() {
     setStartAtMs(null);
   }, []);
 
-  const submitRide = useCallback(async () => {
+  const handleCreateCourse = useCallback(async () => {
+    if (!rideId) return;
     if (!deviceUuid) {
-      Alert.alert('Missing device id', 'Device UUID is not ready yet.');
-      return;
-    }
-    if (!startAtMs) {
-      Alert.alert('No ride', 'Start a ride first.');
+      Alert.alert('기기 식별자 없음', '기기 UUID가 아직 준비되지 않았습니다.');
       return;
     }
     if (path.length < 2) {
-      Alert.alert('Not enough points', 'Record a bit more before submitting.');
+      Alert.alert('경로 포인트 부족', '코스로 저장하려면 경로를 조금 더 기록해 주세요.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const slimPath = downsample(path, 250);
+      const cid = await createCourse({
+        ownerUserId: userId,
+        deviceUuid,
+        title: `내 경로 ${new Date().toISOString().slice(0, 10)}`,
+        description: '모바일 라이딩 기록으로 생성한 코스',
+        visibility: 'public',
+        sourceType: 'ugc',
+        path: slimPath,
+        tags: ['ugc'],
+        warnings: [],
+      });
+      setCourseId(cid);
+      Alert.alert('완료', `코스가 생성되었습니다. (ID: ${cid})`);
+    } catch (e: any) {
+      Alert.alert('코스 생성 실패', String(e?.message ?? e));
+    } finally {
+      setBusy(false);
+    }
+  }, [deviceUuid, path, rideId, userId]);
+
+  const submitRide = useCallback(async () => {
+    if (!deviceUuid) {
+      Alert.alert('기기 식별자 없음', '기기 UUID가 아직 준비되지 않았습니다.');
+      return;
+    }
+    if (!startAtMs) {
+      Alert.alert('라이딩 없음', '먼저 라이딩을 시작해 주세요.');
+      return;
+    }
+    if (path.length < 2) {
+      Alert.alert('경로 포인트 부족', '제출하기 전에 경로를 조금 더 기록해 주세요.');
       return;
     }
 
@@ -174,7 +240,7 @@ export default function RideScreen() {
     try {
       const totalTime = elapsedSec;
       const avgSpeed = totalTime > 0 ? (distanceMeters / totalTime) * 3.6 : 0;
-      const title = `Ride ${new Date().toISOString().slice(0, 10)}`;
+      const title = `라이딩 ${new Date().toISOString().slice(0, 10)}`;
 
       const slimPath = downsample(path, 250);
 
@@ -195,11 +261,17 @@ export default function RideScreen() {
       });
       setToilets(nearby);
     } catch (e: any) {
-      Alert.alert('Submit failed', String(e?.message ?? e));
+      Alert.alert('제출 실패', String(e?.message ?? e));
     } finally {
       setBusy(false);
     }
   }, [deviceUuid, distanceMeters, elapsedSec, path, routeRadiusMeters, startAtMs, userId]);
+
+  const statusLabel = useMemo(() => {
+    if (status === 'running') return '주행 중';
+    if (status === 'stopped') return '정지';
+    return '대기';
+  }, [status]);
 
   const polylineCoords = useMemo(
     () => path.map((p) => ({ latitude: p.lat, longitude: p.lon })),
@@ -219,13 +291,11 @@ export default function RideScreen() {
   return (
     <View style={styles.container}>
       <MapView
-        ref={(r) => {
+        ref={(r: any) => {
           mapRef.current = r;
         }}
         style={styles.map}
         initialRegion={DEFAULT_REGION}
-        region={region}
-        onRegionChangeComplete={setRegion}
         showsUserLocation={permissionGranted === true}
       >
         {polylineCoords.length >= 2 ? (
@@ -249,13 +319,13 @@ export default function RideScreen() {
       <View style={styles.overlay}>
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Text style={styles.cardTitle}>Ride</Text>
-            <Text style={styles.badge}>{status.toUpperCase()}</Text>
+            <Text style={styles.cardTitle}>라이딩</Text>
+            <Text style={styles.badge}>{statusLabel}</Text>
           </View>
 
           <View style={styles.rowBetween}>
-            <Text style={styles.meta}>Time: {stats.time}</Text>
-            <Text style={styles.meta}>Distance: {stats.distance}</Text>
+            <Text style={styles.meta}>시간: {stats.time}</Text>
+            <Text style={styles.meta}>거리: {stats.distance}</Text>
           </View>
 
           <View style={styles.row}>
@@ -264,14 +334,14 @@ export default function RideScreen() {
               onPress={startRide}
               disabled={!canStart}
             >
-              <Text style={styles.primaryButtonText}>Start</Text>
+              <Text style={styles.primaryButtonText}>시작</Text>
             </Pressable>
             <Pressable
               style={[styles.secondaryButton, status !== 'running' ? styles.buttonDisabled : null]}
               onPress={stopRide}
               disabled={status !== 'running'}
             >
-              <Text style={styles.secondaryButtonText}>Stop</Text>
+              <Text style={styles.secondaryButtonText}>중지</Text>
             </Pressable>
           </View>
 
@@ -281,21 +351,30 @@ export default function RideScreen() {
               onPress={submitRide}
               disabled={status !== 'stopped' || busy}
             >
-              <Text style={styles.ghostButtonText}>Submit</Text>
+              <Text style={styles.ghostButtonText}>제출</Text>
             </Pressable>
             <Pressable style={styles.ghostButton} onPress={clearRide} disabled={busy}>
-              <Text style={styles.ghostButtonText}>Clear</Text>
+              <Text style={styles.ghostButtonText}>초기화</Text>
             </Pressable>
           </View>
 
+          {rideId !== null && courseId === null ? (
+             <View style={styles.row}>
+                <Pressable style={styles.primaryButton} onPress={handleCreateCourse} disabled={busy}>
+                 <Text style={styles.primaryButtonText}>코스로 저장</Text>
+                </Pressable>
+             </View>
+          ) : null}
+
           {busy ? <ActivityIndicator style={{ marginTop: 8 }} /> : null}
-          {rideId !== null ? <Text style={styles.meta}>Saved ride id: {rideId}</Text> : null}
+          {rideId !== null ? <Text style={styles.meta}>저장된 라이딩 ID: {rideId}</Text> : null}
+          {courseId !== null ? <Text style={styles.meta}>저장된 코스 ID: {courseId}</Text> : null}
           {toilets.length > 0 ? (
-            <Text style={styles.meta}>Toilets along route: {toilets.length}</Text>
+            <Text style={styles.meta}>경로 주변 화장실: {toilets.length}개</Text>
           ) : null}
           {!deviceUuid && hasHydrated ? (
             <Text style={styles.warnText}>
-              Device UUID is missing. Open Settings or restart the app.
+              기기 UUID가 없습니다. 설정 화면을 확인하거나 앱을 재시작해 주세요.
             </Text>
           ) : null}
         </View>
@@ -305,58 +384,58 @@ export default function RideScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0f14' },
+  container: { flex: 1, backgroundColor: colors.bg },
   map: { flex: 1 },
-  overlay: { position: 'absolute', left: 12, right: 12, bottom: 12 },
+  overlay: { position: 'absolute', left: spacing.md, right: spacing.md, bottom: spacing.md },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     shadowColor: '#000',
     shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowRadius: 14,
     elevation: 4,
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#101827' },
-  meta: { marginTop: 6, fontSize: 12, color: '#445066' },
-  warnText: { marginTop: 8, fontSize: 12, color: '#8a2b2b' },
+  cardTitle: { fontSize: typography.h2, fontWeight: '800', color: colors.ink },
+  meta: { marginTop: spacing.xs, fontSize: typography.caption, color: '#3d587f' },
+  warnText: { marginTop: spacing.sm, fontSize: typography.caption, color: colors.danger },
   badge: {
-    fontSize: 11,
+    fontSize: typography.caption,
     fontWeight: '800',
-    color: '#1a2a44',
-    backgroundColor: '#e7edf6',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
+    color: colors.primaryDeep,
+    backgroundColor: colors.softBlue,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
   },
-  row: { marginTop: 10, flexDirection: 'row', gap: 8 },
-  rowBetween: { marginTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
+  row: { marginTop: spacing.sm, flexDirection: 'row', gap: spacing.sm },
+  rowBetween: { marginTop: spacing.xs, flexDirection: 'row', justifyContent: 'space-between' },
   primaryButton: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#1a2a44',
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryButtonText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
+  primaryButtonText: { fontSize: typography.body, fontWeight: '800', color: '#ffffff' },
   secondaryButton: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#a44',
+    borderRadius: radius.md,
+    backgroundColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  secondaryButtonText: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
+  secondaryButtonText: { fontSize: typography.body, fontWeight: '800', color: '#ffffff' },
   ghostButton: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#e7edf6',
+    borderRadius: radius.md,
+    backgroundColor: colors.softBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ghostButtonText: { fontSize: 14, fontWeight: '700', color: '#1a2a44' },
+  ghostButtonText: { fontSize: typography.body, fontWeight: '800', color: colors.primaryDeep },
   buttonDisabled: { opacity: 0.5 },
 });

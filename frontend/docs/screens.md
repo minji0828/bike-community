@@ -1,42 +1,93 @@
 # Screens
 
-## 1) Home / Map
+## Navigation map
 
-Purpose: orientation + quick access to nearby toilets.
+- Tabs: `Map`, `Courses`, `Ride`, `Settings`
+- Stack overlays: `CourseDetail`, `CourseFollow`
 
-Key UI elements:
+## 1) Map
 
-- Map centered on current location
-- "Refresh" action to re-fetch nearby toilets
-- Radius control (default 500m)
-- Marker detail sheet (name/address/opening hours)
+Purpose: immediate local context and sanitary stop discovery.
 
-Primary flows:
+Primary API:
 
-1. App launch -> request location permission -> map centers on user
-2. Fetch nearby toilets -> render markers
-3. Tap marker -> see details
+- `GET /api/v1/pois/nearby`
 
-## 2) Ride
+Core UI:
 
-Purpose: capture a route and request toilets along it.
+- Full map canvas
+- Floating control card (radius, refresh, result count)
+- Nearby toilet markers
 
-Key UI elements:
+## 2) Courses (Featured)
 
-- Start/Stop button
-- Live stats: elapsed time, approximate distance (client-side)
-- Polyline on map for recorded path
-- Results panel: toilets along route
+Purpose: give non-empty riding options on cold start.
 
-Primary flows:
+Primary API:
 
-1. Start -> begin sampling location -> append points to path
-2. Stop -> submit ride to backend -> fetch toilets along route -> show results
+- `GET /api/v1/courses/featured`
 
-## 3) Settings
+Core UI:
 
-Purpose: local configuration and debugging.
+- Card list with distance/time/tags
+- Status chip (featured/order context)
+- Pull-to-refresh
 
-- API base URL (e.g. `http://10.0.2.2:8080` for Android emulator)
-- Default nearby radius
-- Show/copy device UUID
+## 3) Course Detail
+
+Purpose: validate if this course is worth following.
+
+Primary API:
+
+- `GET /api/v1/courses/{courseId}`
+
+Core UI:
+
+- Route map preview with start/end markers
+- Metadata strip (distance, duration, loop, toilets)
+- Warning list
+- CTA: Start Following
+
+## 4) Course Follow
+
+Purpose: turn a stored route into live guidance.
+
+Primary API:
+
+- `GET /api/v1/courses/{courseId}`
+
+Core UI:
+
+- Route polyline + user location
+- Distance-to-route indicator
+- Off-route banner with hysteresis logic to avoid flicker
+- Recenter action and stop-follow action
+
+## 5) Ride
+
+Purpose: record and save user-generated ride data.
+
+Primary APIs:
+
+- `POST /api/v1/ridings`
+- `POST /api/v1/pois/along-route`
+- `POST /api/v1/courses`
+
+Core UI:
+
+- Ride state badge (`IDLE`, `RUNNING`, `STOPPED`)
+- Time/distance live metrics
+- Start/Stop/Submit/Clear controls
+- Post-submit metrics (rideId, toilets count)
+- Save as Course action (path upload mapped to backend course create request)
+
+## 6) Settings
+
+Purpose: device-local ops and backend connectivity setup.
+
+Core UI:
+
+- API base URL input + connectivity test
+- Nearby/route radius configuration
+- Optional userId for location APIs
+- Device UUID display + copy button

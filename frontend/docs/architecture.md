@@ -1,34 +1,76 @@
 # Architecture
 
-## Stack
+## Goal
 
-- React Native via Expo (managed)
-- TypeScript
-- React Navigation
-- Data fetching via `fetch` (simple REST)
-- Storage: AsyncStorage (config + device UUID)
+Build a frontend that is stable for MVP delivery now, but can scale without rewrite when auth, background tracking, and richer course features are added.
 
-## App structure
+## Current stack
 
-`frontend/mobile/src/`
+- Expo-managed React Native + TypeScript
+- React Navigation (tabs + stack)
+- `fetch` API client wrapper (`src/api/client.ts`)
+- Zustand persisted settings store (`src/state/settingsStore.ts`)
+- AsyncStorage for local persistence
 
-- `api/` - REST client + endpoint functions
-- `navigation/` - React Navigation tabs
-- `screens/` - screen components (Map/Ride/Settings)
-- `state/` - app state stores (settings)
-- `types/` - shared TS types matching backend DTOs
-- `utils/` - helpers (distance calc, downsampling, uuid)
+## Practical architecture baseline (adopted)
 
-## Error handling
+### 1) Layered module boundaries
 
-- Treat any non-2xx response as an error
-- Backend uses a wrapper `{ code, message, data }` for most endpoints; show `message` when present
-- Keep errors visible but non-blocking (retry-friendly)
+- `api/`: endpoint functions only, no UI logic
+- `types/`: backend DTO-aligned request/response types
+- `state/`: client settings and persistent app config
+- `screens/`: orchestration + rendering only
+- `components/`: reusable view primitives (map wrapper, UI cards/buttons to expand)
+- `utils/`: stateless helpers (distance, downsampling, uuid)
 
-## Location sampling
+### 2) API mapping policy
 
-Foreground-only (MVP):
+- Frontend endpoint calls must map 1:1 to active backend controller methods.
+- No speculative endpoint call (example: removed `/courses/from-riding`, replaced with real `POST /api/v1/courses`).
+- DTO naming in frontend mirrors backend response intent.
 
-- Use a time-based sampling interval (e.g. 2-5s) OR distance filter
-- Append points to `path` while a ride is active
-- Derive distance client-side for UI (backend stores the polyline)
+### 3) State policy
+
+- Persist only durable configuration (`apiBaseUrl`, `radius`, `userId`, `deviceUuid`).
+- Keep volatile ride tracking state in screen scope for MVP.
+- Move to dedicated ride store/hook only when background tracking is introduced.
+
+## Design system direction (Swing x GCOO inspired)
+
+- Visual tone: urban mobility dashboard (deep navy base + electric accent + mint safety accent)
+- Information style: high-contrast status chips, map-first layout, floating action cards
+- Interaction style: quick, glove-friendly controls (large press targets, clear hierarchy)
+
+## Target folder shape (next refactor stage)
+
+```text
+src/
+  api/
+  components/
+    ui/
+  hooks/
+  navigation/
+  screens/
+  state/
+  theme/
+  types/
+  utils/
+```
+
+## Error handling standards
+
+- Treat non-2xx as errors.
+- Prefer backend `message` when available.
+- Surface retry path in-screen (not only modal alert) for map/course list failures.
+
+## Location tracking standards
+
+- Foreground permission only in MVP.
+- Sampling baseline: `timeInterval=2000ms`, `distanceInterval=5m`.
+- Off-route detection uses point-to-segment distance + hysteresis to avoid flicker.
+
+## References used to shape this baseline
+
+- Expo Router/architecture docs (for future file-routing migration)
+- Shopify RN performance guidance (list/map-heavy flows)
+- Zustand practical state split (server-state vs client-state separation)

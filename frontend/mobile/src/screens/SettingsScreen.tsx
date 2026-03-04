@@ -8,9 +8,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 
 import { useSettingsStore } from '../state/settingsStore';
 import { getJson } from '../api/client';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 export default function SettingsScreen() {
   const apiBaseUrl = useSettingsStore((s) => s.apiBaseUrl);
@@ -32,20 +34,27 @@ export default function SettingsScreen() {
     try {
       // SpringDoc default endpoint.
       await getJson<any>('/v3/api-docs');
-      Alert.alert('OK', 'Backend is reachable.');
+      Alert.alert('연결 성공', '백엔드에 정상적으로 연결됩니다.');
     } catch (e: any) {
-      Alert.alert('Failed', String(e?.message ?? e));
+      Alert.alert('연결 실패', String(e?.message ?? e));
     } finally {
       setTesting(false);
     }
   };
 
+  const copyUuid = async () => {
+    if (deviceUuid) {
+      await Clipboard.setStringAsync(deviceUuid);
+      Alert.alert('복사 완료', 'Device UUID를 클립보드에 복사했습니다.');
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Settings</Text>
+      <Text style={styles.title}>설정</Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>API Base URL</Text>
+        <Text style={styles.label}>API 서버 주소</Text>
         <TextInput
           value={apiBaseUrl}
           onChangeText={setApiBaseUrl}
@@ -55,15 +64,15 @@ export default function SettingsScreen() {
           style={styles.input}
         />
         <Text style={styles.hint}>
-          Android emulator uses `http://10.0.2.2:8080` for your local machine.
+          Android 에뮬레이터는 로컬 서버 접속 시 `http://10.0.2.2:8080`을 사용합니다.
         </Text>
         <Pressable style={styles.button} onPress={testConnection} disabled={testing}>
-          <Text style={styles.buttonText}>{testing ? 'Testing...' : 'Test connection'}</Text>
+          <Text style={styles.buttonText}>{testing ? '연결 확인 중...' : '연결 테스트'}</Text>
         </Pressable>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Nearby radius (meters)</Text>
+        <Text style={styles.label}>주변 검색 반경 (m)</Text>
         <TextInput
           value={String(nearbyRadiusMeters)}
           onChangeText={(t) => {
@@ -74,7 +83,7 @@ export default function SettingsScreen() {
           style={styles.input}
         />
 
-        <Text style={styles.label}>Route radius (meters)</Text>
+        <Text style={styles.label}>경로 검색 반경 (m)</Text>
         <TextInput
           value={String(routeRadiusMeters)}
           onChangeText={(t) => {
@@ -87,7 +96,7 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>User ID (future)</Text>
+        <Text style={styles.label}>사용자 ID (추후 기능)</Text>
         <TextInput
           value={userIdText}
           onChangeText={(t) => {
@@ -101,16 +110,21 @@ export default function SettingsScreen() {
           }}
           keyboardType="numeric"
           style={styles.input}
-          placeholder="(optional)"
+          placeholder="(선택 입력)"
         />
         <Text style={styles.hint}>
-          Location endpoints require an existing user record in the backend.
+          위치 API를 사용하려면 백엔드에 등록된 userId가 필요합니다.
         </Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Device UUID</Text>
-        <Text style={styles.mono}>{deviceUuid ?? '(generating...)'}</Text>
+        <Text style={styles.label}>기기 UUID</Text>
+        <Text style={styles.mono}>{deviceUuid ?? '(생성 중...)'}</Text>
+        {deviceUuid ? (
+          <Pressable style={styles.ghostButton} onPress={copyUuid}>
+            <Text style={styles.ghostButtonText}>UUID 복사</Text>
+          </Pressable>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -118,41 +132,50 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#0b0f14',
-    gap: 12,
+    padding: spacing.lg,
+    backgroundColor: colors.bg,
+    gap: spacing.md,
   },
-  title: { fontSize: 22, fontWeight: '800', color: '#f5f7fb' },
+  title: { fontSize: 24, fontWeight: '900', color: colors.text },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
   },
-  label: { fontSize: 13, fontWeight: '700', color: '#101827' },
-  hint: { marginTop: 6, fontSize: 12, color: '#445066' },
+  label: { fontSize: typography.caption, fontWeight: '800', color: colors.ink },
+  hint: { marginTop: spacing.xs, fontSize: typography.caption, color: '#3b557d' },
   input: {
-    marginTop: 8,
+    marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: '#d5dceb',
-    borderRadius: 12,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: typography.body,
     backgroundColor: '#ffffff',
-    color: '#101827',
+    color: colors.ink,
   },
   button: {
-    marginTop: 10,
+    marginTop: spacing.sm,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: '#1a2a44',
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
+  buttonText: { color: '#ffffff', fontSize: typography.body, fontWeight: '800' },
+  ghostButton: {
+    marginTop: spacing.sm,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.softBlue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ghostButtonText: { color: colors.primaryDeep, fontSize: typography.body, fontWeight: '800' },
   mono: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#101827',
+    marginTop: spacing.sm,
+    fontSize: typography.caption,
+    color: colors.ink,
   },
 });

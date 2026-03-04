@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootTabs } from './src/navigation/RootTabs';
+import { RootStack } from './src/navigation/RootStack';
 import { useSettingsStore } from './src/state/settingsStore';
 
 export default function App() {
@@ -22,7 +22,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <RootTabs />
+        <RootStack />
       </NavigationContainer>
       <StatusBar style="auto" />
     </SafeAreaProvider>

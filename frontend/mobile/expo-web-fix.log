@@ -1,0 +1,22 @@
+Starting project at C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8093
+Logs for your project will appear below.
+Web .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web .\index.ts ░░░░░░░░░░░░░░░░  4.0% (2/4)
+Web .\index.ts ░░░░░░░░░░░░░░░░  4.0% (2/4)
+Web .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web .\index.ts ▓▓▓▓░░░░░░░░░░░░ 28.8% (22/41)
+Web .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+ WARN  Attempted to import the module "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand\index.js" which is not listed in the "exports" of "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand" under the requested subpath "./index.js". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+ WARN  Attempted to import the module "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand\middleware.js" which is not listed in the "exports" of "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand" under the requested subpath "./middleware.js". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+ WARN  Attempted to import the module "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand\vanilla.js" which is not listed in the "exports" of "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand" under the requested subpath "./vanilla.js". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+Web .\index.ts ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.8% (524/614)
+Web .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 16615ms index.ts (780 modules)
+Web Bundled 9827ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 763ms index.ts (1 module)

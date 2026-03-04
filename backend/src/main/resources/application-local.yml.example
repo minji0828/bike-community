@@ -1,0 +1,24 @@
+# Local development overrides (copy to application-local.yml and edit)
+# IMPORTANT: Do not commit application-local.yml (contains secrets).
+
+api:
+  seoul:
+    key: "PUT-YOUR-SEOUL-API-KEY-HERE"
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bikeoasis
+    username: postgres
+    password: "PUT-YOUR-DB-PASSWORD-HERE"
+
+poi:
+  fetch:
+    onstartup: true
+
+course:
+  seed:
+    gpx:
+      onstartup: true
+      path: 설계/자료/동부5고개.gpx
+      title: 동부5고개 (벗서명다유)
+      featured-rank: 1

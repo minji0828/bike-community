@@ -1,0 +1,41 @@
+Starting project at C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile
+Starting Metro Bundler
+
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+ WARN  Attempted to import the module "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand\index.js" which is not listed in the "exports" of "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand" under the requested subpath "./index.js". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+Web .\index.ts ▓▓▓▓▓▓▓▓▓░░░░░░░ 59.6% (205/277)
+ WARN  Attempted to import the module "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand\middleware.js" which is not listed in the "exports" of "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand" under the requested subpath "./middleware.js". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+ WARN  Attempted to import the module "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand\vanilla.js" which is not listed in the "exports" of "C:\Users\user\Desktop\PROJECT\BIke-project\frontend\mobile\node_modules\zustand" under the requested subpath "./vanilla.js". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+| Importing local resources in CSS is not supported yet. (node_modules\leaflet\dist\leaflet.css:359:24):
+|   357 | 	}
+|   358 | .leaflet-control-layers-toggle {
+| > 359 | 	background-image: url(images/layers.png);
+|       | 	                      ^
+|   360 | 	width: 36px;
+|   361 | 	height: 36px;
+|   362 | 	}
+| Importing local resources in CSS is not supported yet. (node_modules\leaflet\dist\leaflet.css:364:24):
+|   362 | 	}
+|   363 | .leaflet-retina .leaflet-control-layers-toggle {
+| > 364 | 	background-image: url(images/layers-2x.png);
+|       | 	                      ^
+|   365 | 	background-size: 26px 26px;
+|   366 | 	}
+|   367 | .leaflet-touch .leaflet-control-layers-toggle {
+| Importing local resources in CSS is not supported yet. (node_modules\leaflet\dist\leaflet.css:407:24):
+|   405 | /* Default icon URLs */
+|   406 | .leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+| > 407 | 	background-image: url(images/marker-icon.png);
+|       | 	                      ^
+|   408 | 	}
+|   409 |
+|   410 |
+| (node:46488) DeprecationWarning: Passing lineNumber and colNumber is deprecated to @babel/code-frame. Please use `codeFrameColumns`.
+| (Use `node --trace-deprecation ...` to show where the warning was created)
+Web Bundled 6161ms index.ts (846 modules)
+ LOG  [web] Logs will appear in the browser console
+Web .\index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 32ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console

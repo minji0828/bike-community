@@ -1,0 +1,21 @@
+api:
+  seoul:
+    key: ${SEOUL_API_KEY:}
+
+poi:
+  fetch:
+    onstartup: false
+
+spring:
+  datasource:
+    # Runs PostgreSQL in Docker for tests. Requires Docker.
+    # Uses PostGIS-enabled image so geometry(Point/LineString) DDL works.
+    url: jdbc:tc:postgresql:16:///bikeoasis?TC_DOCKER_IMAGE=postgis/postgis:16-3.4
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+logging:
+  level:
+    org.springframework: WARN

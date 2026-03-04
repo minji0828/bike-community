@@ -1,0 +1,64 @@
+api:
+  seoul:
+    key: ${SEOUL_API_KEY:} # local/dev: set SEOUL_API_KEY env var
+    base-url: http://openAPI.seoul.go.kr:8088
+    timeout: 10000  # 10초
+    retry-count: 3  # 최대 3회 재시도
+    retry-delay: 1000  # 첫 시도 후 1초, 그 다음 2초, 3초...
+
+poi:
+  fetch:
+    onstartup: true
+    page-size: 1000
+    max-pages: 5
+    mode: incremental  # "full" 또는 "incremental"
+  default:
+    category-id: 1
+
+location:
+  # 위치 데이터 보관 기간 (일)
+  retention-days: 30
+  # 위치 업데이트 최소 간격 (초)
+  min-update-interval: 5
+  # 배치 처리 크기
+  batch-size: 100
+
+course:
+  seed:
+    gpx:
+      onstartup: true
+      path: 설계/자료/동부5고개.gpx
+      title: 동부5고개 (벗서명다유)
+      featured-rank: 1
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bikeoasis}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        # ===== JPA 배치 처리 최적화 =====
+        # saveAll()이 호출될 때 여러 INSERT/UPDATE를 배치로 처리
+        jdbc:
+          batch_size: 100        # 배치 크기: 한 번에 100개씩 처리
+          fetch_size: 50          # 조회 배치 사이즈
+          batch_versioned_data: true  # 버전 컬럼 배치 처리
+        order_inserts: true       # INSERT 최적화
+        order_updates: true       # UPDATE 최적화
+        generate_statistics: false # 성능 모니터링 (필요시 true로 변경)
+
+        # ===== 기타 성능 최적화 =====
+        show_sql: false           # SQL 로깅 (필요시만 true)
+        format_sql: false         # SQL 포맷팅
+        use_sql_comments: false   # SQL 주석
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    com.bikeoasis: INFO
+    com.bikeoasis.domain.user: DEBUG
+    # org.hibernate.SQL: DEBUG  # SQL 로깅 (필요시 활성화)

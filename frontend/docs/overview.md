@@ -1,28 +1,39 @@
 # Overview
 
-BikeOasis mobile is a React Native app focused on:
+BikeOasis mobile focuses on one clear commuter flow:
 
-- Showing nearby toilets (POI) around the rider
-- Tracking a ride (path points) and saving it to the backend
-- Querying toilets along a recorded route
+1. Discover a safe/usable route context (map + nearby toilets)
+2. Record an actual ride
+3. Convert real ride data into reusable course content
 
-## MVP scope
+## Product style target
 
-- Map screen
-  - Request foreground location permission
-  - Show current position
-  - Fetch and display nearby toilets as map markers
-- Ride screen
-  - Start/stop tracking
-  - Record path points (lat/lon) locally
-  - Submit a ride to the backend (`POST /api/v1/ridings`)
-  - Fetch toilets along that path (`POST /api/v1/pois/along-route`)
-- Settings screen
-  - Configure API base URL for local/dev environments
-  - Show a persistent `deviceUuid` used for anonymous rides
+- Mobility utility first (fast, practical)
+- Swing-like urban confidence + GCOO-like clear accessibility
+- Map-centric UI with compact actionable overlays
 
-## Non-goals (for now)
+## MVP scope (current implementation target)
 
-- Authentication / login UI
-- User creation/profile flows (backend `UserController` is currently empty)
-- Background location tracking (foreground-only until requirements are confirmed)
+- Map
+  - Foreground location permission
+  - Current position
+  - Nearby toilet query and marker rendering (`GET /api/v1/pois/nearby`)
+- Courses
+  - Featured list (`GET /api/v1/courses/featured`)
+  - Course detail and follow (`GET /api/v1/courses/{id}`)
+  - Off-route detection with hysteresis in follow mode
+- Ride
+  - Start/stop path recording
+  - Ride upload (`POST /api/v1/ridings`)
+  - Along-route toilet query (`POST /api/v1/pois/along-route`)
+  - Course creation from recorded path (`POST /api/v1/courses`)
+- Settings
+  - API base URL configuration
+  - Radius configuration
+  - Persistent device UUID copy
+
+## Explicitly deferred
+
+- Login/auth and profile UX (backend user endpoints are not active yet)
+- Background location service lifecycle optimization
+- Shared course deep-link entry UX (`/courses/public/{shareId}` UI pending)
