@@ -4,6 +4,7 @@ import com.bikeoasis.domain.course.dto.CourseCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseCreateResponse;
 import com.bikeoasis.domain.course.dto.CourseDetailResponse;
 import com.bikeoasis.domain.course.dto.CourseFeaturedResponse;
+import com.bikeoasis.domain.course.dto.CourseFromRidingCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseGpxCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseShareResponse;
 import com.bikeoasis.domain.course.service.CourseService;
@@ -29,6 +30,15 @@ public class CourseController {
     @Operation(summary = "코스 생성", description = "경로 업로드 기반 코스를 생성합니다.")
     public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourse(@RequestBody CourseCreateRequest request) {
         Long courseId = courseService.createCourse(request);
+        return ResponseEntity.ok(ApiResponse.success(new CourseCreateResponse(courseId)));
+    }
+
+    @PostMapping("/from-riding")
+    @Operation(summary = "코스 생성(라이딩 기반)", description = "라이딩 기록(ridingId)으로 코스를 생성합니다.")
+    public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourseFromRiding(
+            @RequestBody CourseFromRidingCreateRequest request
+    ) {
+        Long courseId = courseService.createCourseFromRiding(request);
         return ResponseEntity.ok(ApiResponse.success(new CourseCreateResponse(courseId)));
     }
 

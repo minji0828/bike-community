@@ -4,6 +4,8 @@ import com.bikeoasis.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -22,6 +24,18 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.builder()
                         .code(e.getCode())
                         .message(e.getMessage())
+                        .data(null)
+                        .build());
+    }
+
+    @ExceptionHandler({PessimisticLockingFailureException.class, CannotAcquireLockException.class})
+    public ResponseEntity<ApiResponse<?>> handleLockException(RuntimeException e) {
+        log.warn("Lock Exception: {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.builder()
+                        .code(409)
+                        .message("요청이 많아 잠시 처리 중입니다. 잠시 후 다시 시도해 주세요.")
                         .data(null)
                         .build());
     }

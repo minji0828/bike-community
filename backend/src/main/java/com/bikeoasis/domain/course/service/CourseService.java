@@ -3,6 +3,7 @@ package com.bikeoasis.domain.course.service;
 import com.bikeoasis.domain.course.dto.CourseCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseDetailResponse;
 import com.bikeoasis.domain.course.dto.CourseFeaturedResponse;
+import com.bikeoasis.domain.course.dto.CourseFromRidingCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseGpxCreateRequest;
 import com.bikeoasis.domain.course.entity.Course;
 import com.bikeoasis.domain.course.entity.CourseTag;
@@ -16,6 +17,8 @@ import com.bikeoasis.domain.course.repository.CourseRepository;
 import com.bikeoasis.domain.course.repository.CourseTagRepository;
 import com.bikeoasis.domain.course.repository.CourseWarningRepository;
 import com.bikeoasis.domain.course.repository.TagRepository;
+import com.bikeoasis.domain.riding.entity.Riding;
+import com.bikeoasis.domain.riding.repository.RidingRepository;
 import com.bikeoasis.global.error.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +57,7 @@ public class CourseService {
     private final CourseTagRepository courseTagRepository;
     private final CourseWarningRepository courseWarningRepository;
     private final GeometryFactory geometryFactory;
+    private final RidingRepository ridingRepository;
 
     @Transactional
     public Long createCourse(CourseCreateRequest request) {
@@ -133,6 +137,62 @@ public class CourseService {
                 .bboxMaxLat(bbox.maxLat)
                 .build();
         return courseRepository.save(course).getId();
+    }
+
+    @Transactional
+    public Long createCourseFromRiding(CourseFromRidingCreateRequest request) {
+        if (request == null) {
+            throw new BusinessException(400, "요청 본문이 필요합니다.");
+        }
+        if (request.getRidingId() == null) {
+            throw new BusinessException(400, "ridingId는 필수입니다.");
+        }
+        if (request.getTitle() == null || request.getTitle().isBlank()) {
+            throw new BusinessException(400, "title은 필수입니다.");
+        }
+
+        Riding riding = ridingRepository.findById(request.getRidingId())
+                .orElseThrow(() -> new BusinessException(404, "라이딩을 찾을 수 없습니다."));
+
+        if (riding.getPathData() == null || riding.getPathData().getCoordinates() == null || riding.getPathData().getCoordinates().length < 2) {
+            throw new BusinessException(400, "라이딩 경로 데이터가 부족합니다.");
+        }
+
+        Coordinate[] coordinates = riding.getPathData().getCoordinates();
+        LineString lineString = geometryFactory.createLineString(coordinates);
+        Bbox bbox = computeBbox(coordinates);
+        double distanceKm = computeDistanceKm(coordinates);
+        boolean loop = computeLoop(coordinates);
+        int estimatedDurationMin = (int) Math.max(1, Math.round((distanceKm / DEFAULT_AVG_SPEED_KMH) * 60.0));
+
+        CourseSourceType sourceType = parseSourceType(request.getSourceType());
+        String description = (request.getDescription() != null && !request.getDescription().isBlank())
+                ? request.getDescription()
+                : request.getNotes();
+
+        Course course = Course.builder()
+                .ownerUserId(riding.getUserId())
+                .deviceUuid(riding.getDeviceUuid())
+                .title(request.getTitle())
+                .description(description)
+                .visibility(parseVisibility(request.getVisibility()))
+                .sourceType(sourceType)
+                .verifiedStatus(sourceType == CourseSourceType.CURATED ? CourseVerifiedStatus.CURATED : CourseVerifiedStatus.UNVERIFIED)
+                .path(lineString)
+                .gpxData(buildGpxFromCoordinates(request.getTitle(), coordinates))
+                .distanceKm(distanceKm)
+                .estimatedDurationMin(estimatedDurationMin)
+                .loop(loop)
+                .bboxMinLon(bbox.minLon)
+                .bboxMinLat(bbox.minLat)
+                .bboxMaxLon(bbox.maxLon)
+                .bboxMaxLat(bbox.maxLat)
+                .build();
+
+        Course saved = courseRepository.save(course);
+        saveTags(saved, request.getTags());
+        saveWarnings(saved, request.getWarnings());
+        return saved.getId();
     }
 
     public CourseDetailResponse getCourseDetail(Long courseId) {
