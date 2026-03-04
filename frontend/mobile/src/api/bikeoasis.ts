@@ -1,8 +1,12 @@
 import {
+  AuthTokenResponse,
   ApiResponse,
+  CourseComment,
   CourseCreateRequest,
+  CourseFromRidingCreateRequest,
   CourseDetail,
   CourseSummary,
+  KakaoLoginRequest,
   PointDto,
   RidingCreateRequest,
   Toilet,
@@ -12,7 +16,8 @@ import {
   dongbu5gogaeDetail,
   dongbu5gogaeSummary,
 } from '../mock/dongbu5gogae';
-import { getJson, postJson, postText } from './client';
+import { useSettingsStore } from '../state/settingsStore';
+import { deleteJson, getJson, getText, postJson, postText } from './client';
 
 function asNumber(value: unknown, fallback = 0) {
   const n = Number(value);
@@ -110,6 +115,20 @@ function unwrap<T>(res: ApiResponse<T> | T): T {
   return res as T;
 }
 
+function optionalAuthHeaders() {
+  const token = useSettingsStore.getState().accessToken;
+  if (!token || token.trim().length === 0) return undefined;
+  return { Authorization: `Bearer ${token}` };
+}
+
+function requiredAuthHeaders() {
+  const headers = optionalAuthHeaders();
+  if (!headers) {
+    throw new Error('인증 토큰이 없습니다. 설정에서 카카오 로그인(코드 교환)을 먼저 진행해 주세요.');
+  }
+  return headers;
+}
+
 export async function getNearbyToilets(params: {
   lat: number;
   lon: number;
@@ -180,7 +199,85 @@ export async function createCourse(request: CourseCreateRequest): Promise<number
   return data.courseId;
 }
 
+export async function createCourseFromRiding(
+  request: CourseFromRidingCreateRequest
+): Promise<number> {
+  const res = await postJson<ApiResponse<{ courseId: number }>>(
+    '/api/v1/courses/from-riding',
+    request
+  );
+  const data = unwrap(res);
+  return data.courseId;
+}
+
 export async function issueCourseShare(courseId: number): Promise<string> {
   const res = await postJson<ApiResponse<{ shareId: string }>>(`/api/v1/courses/${courseId}/share`);
   return unwrap(res).shareId;
+}
+
+export async function loginWithKakao(request: KakaoLoginRequest): Promise<AuthTokenResponse> {
+  const res = await postJson<ApiResponse<AuthTokenResponse>>('/api/v1/auth/kakao', request);
+  return unwrap(res);
+}
+
+export async function listCourseComments(
+  courseId: number,
+  params?: { cursor?: number; limit?: number }
+): Promise<CourseComment[]> {
+  const res = await getJson<ApiResponse<CourseComment[]>>(
+    `/api/v1/courses/${courseId}/comments`,
+    {
+      cursor: params?.cursor,
+      limit: params?.limit ?? 20,
+    },
+    optionalAuthHeaders()
+  );
+  return unwrap(res);
+}
+
+export async function createCourseComment(courseId: number, body: string): Promise<number> {
+  const res = await postJson<ApiResponse<{ commentId: number }>>(
+    `/api/v1/courses/${courseId}/comments`,
+    { body },
+    undefined,
+    requiredAuthHeaders()
+  );
+  return unwrap(res).commentId;
+}
+
+export async function deleteCourseComment(commentId: number): Promise<void> {
+  await deleteJson<ApiResponse<string>>(
+    `/api/v1/comments/${commentId}`,
+    undefined,
+    requiredAuthHeaders()
+  );
+}
+
+export async function reportCourseComment(
+  commentId: number,
+  payload: { reason: string; note?: string }
+): Promise<number> {
+  const res = await postJson<ApiResponse<{ reportId: number }>>(
+    `/api/v1/comments/${commentId}/reports`,
+    payload,
+    undefined,
+    requiredAuthHeaders()
+  );
+  return unwrap(res).reportId;
+}
+
+export async function getCourseGpx(courseId: number): Promise<string> {
+  return getText(`/api/v1/courses/${courseId}/gpx`);
+}
+
+export async function syncToilets(mode: 'full' | 'incremental' | 'auto' = 'auto') {
+  const path =
+    mode === 'full'
+      ? '/api/v1/pois/sync/full'
+      : mode === 'incremental'
+        ? '/api/v1/pois/sync/incremental'
+        : '/api/v1/pois/sync/toilets';
+
+  const res = await postJson<ApiResponse<string>>(path);
+  return unwrap(res);
 }

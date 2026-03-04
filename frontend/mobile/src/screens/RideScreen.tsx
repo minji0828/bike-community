@@ -4,16 +4,16 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import MapView, { Marker, Polyline, Region } from '../components/MapWrapper';
 
-import { createCourse, createRiding, getToiletsAlongRoute } from '../api/bikeoasis';
+import { createCourseFromRiding, createRiding, getToiletsAlongRoute } from '../api/bikeoasis';
+import { AppButton, AppCard, AppChip, ScreenContainer } from '../components/ui';
 import { useSettingsStore } from '../state/settingsStore';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, spacing, typography } from '../theme/tokens';
 import type { PointDto, Toilet } from '../types/bikeoasis';
 import { haversineMeters, formatMeters } from '../utils/distance';
 import { downsample } from '../utils/downsample';
@@ -190,27 +190,16 @@ export default function RideScreen() {
 
   const handleCreateCourse = useCallback(async () => {
     if (!rideId) return;
-    if (!deviceUuid) {
-      Alert.alert('기기 식별자 없음', '기기 UUID가 아직 준비되지 않았습니다.');
-      return;
-    }
-    if (path.length < 2) {
-      Alert.alert('경로 포인트 부족', '코스로 저장하려면 경로를 조금 더 기록해 주세요.');
-      return;
-    }
 
     setBusy(true);
     try {
-      const slimPath = downsample(path, 250);
-      const cid = await createCourse({
-        ownerUserId: userId,
-        deviceUuid,
+      const cid = await createCourseFromRiding({
+        ridingId: rideId,
         title: `내 경로 ${new Date().toISOString().slice(0, 10)}`,
-        description: '모바일 라이딩 기록으로 생성한 코스',
         visibility: 'public',
         sourceType: 'ugc',
-        path: slimPath,
         tags: ['ugc'],
+        notes: '모바일 라이딩 기록으로 생성한 코스',
         warnings: [],
       });
       setCourseId(cid);
@@ -220,7 +209,7 @@ export default function RideScreen() {
     } finally {
       setBusy(false);
     }
-  }, [deviceUuid, path, rideId, userId]);
+  }, [rideId]);
 
   const submitRide = useCallback(async () => {
     if (!deviceUuid) {
@@ -289,7 +278,7 @@ export default function RideScreen() {
   }, [distanceMeters, elapsedSec]);
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer>
       <MapView
         ref={(r: any) => {
           mapRef.current = r;
@@ -317,10 +306,10 @@ export default function RideScreen() {
       </MapView>
 
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <AppCard style={styles.card}>
           <View style={styles.rowBetween}>
             <Text style={styles.cardTitle}>라이딩</Text>
-            <Text style={styles.badge}>{statusLabel}</Text>
+            <AppChip text={statusLabel} tone={status === 'running' ? 'success' : 'info'} />
           </View>
 
           <View style={styles.rowBetween}>
@@ -329,40 +318,39 @@ export default function RideScreen() {
           </View>
 
           <View style={styles.row}>
-            <Pressable
-              style={[styles.primaryButton, !canStart ? styles.buttonDisabled : null]}
+            <AppButton
+              variant="secondary"
+              style={!canStart ? styles.buttonDisabled : null}
               onPress={startRide}
               disabled={!canStart}
-            >
-              <Text style={styles.primaryButtonText}>시작</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.secondaryButton, status !== 'running' ? styles.buttonDisabled : null]}
+              label="시작"
+              full
+            />
+            <AppButton
+              variant="danger"
+              style={status !== 'running' ? styles.buttonDisabled : null}
               onPress={stopRide}
               disabled={status !== 'running'}
-            >
-              <Text style={styles.secondaryButtonText}>중지</Text>
-            </Pressable>
+              label="중지"
+              full
+            />
           </View>
 
           <View style={styles.row}>
-            <Pressable
-              style={[styles.ghostButton, status !== 'stopped' ? styles.buttonDisabled : null]}
+            <AppButton
+              variant="ghost"
+              style={status !== 'stopped' ? styles.buttonDisabled : null}
               onPress={submitRide}
               disabled={status !== 'stopped' || busy}
-            >
-              <Text style={styles.ghostButtonText}>제출</Text>
-            </Pressable>
-            <Pressable style={styles.ghostButton} onPress={clearRide} disabled={busy}>
-              <Text style={styles.ghostButtonText}>초기화</Text>
-            </Pressable>
+              label="제출"
+              full
+            />
+            <AppButton variant="ghost" onPress={clearRide} disabled={busy} label="초기화" full />
           </View>
 
           {rideId !== null && courseId === null ? (
              <View style={styles.row}>
-                <Pressable style={styles.primaryButton} onPress={handleCreateCourse} disabled={busy}>
-                 <Text style={styles.primaryButtonText}>코스로 저장</Text>
-                </Pressable>
+                <AppButton variant="secondary" label="코스로 저장" onPress={handleCreateCourse} disabled={busy} full />
              </View>
           ) : null}
 
@@ -377,9 +365,9 @@ export default function RideScreen() {
               기기 UUID가 없습니다. 설정 화면을 확인하거나 앱을 재시작해 주세요.
             </Text>
           ) : null}
-        </View>
+        </AppCard>
       </View>
-    </View>
+    </ScreenContainer>
   );
 }
 
@@ -387,55 +375,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   map: { flex: 1 },
   overlay: { position: 'absolute', left: spacing.md, right: spacing.md, bottom: spacing.md },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 14,
-    elevation: 4,
-  },
+  card: { backgroundColor: colors.mapCard },
   cardTitle: { fontSize: typography.h2, fontWeight: '800', color: colors.ink },
-  meta: { marginTop: spacing.xs, fontSize: typography.caption, color: '#3d587f' },
+  meta: { marginTop: spacing.xs, fontSize: typography.caption, color: colors.textMuted },
   warnText: { marginTop: spacing.sm, fontSize: typography.caption, color: colors.danger },
-  badge: {
-    fontSize: typography.caption,
-    fontWeight: '800',
-    color: colors.primaryDeep,
-    backgroundColor: colors.softBlue,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
   row: { marginTop: spacing.sm, flexDirection: 'row', gap: spacing.sm },
   rowBetween: { marginTop: spacing.xs, flexDirection: 'row', justifyContent: 'space-between' },
-  primaryButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: { fontSize: typography.body, fontWeight: '800', color: '#ffffff' },
-  secondaryButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: { fontSize: typography.body, fontWeight: '800', color: '#ffffff' },
-  ghostButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.softBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostButtonText: { fontSize: typography.body, fontWeight: '800', color: colors.primaryDeep },
   buttonDisabled: { opacity: 0.5 },
 });

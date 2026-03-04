@@ -84,3 +84,45 @@ export type CourseCreateRequest = {
     validUntil?: string;
   }>;
 };
+
+export type CourseFromRidingCreateRequest = {
+  ridingId: number;
+  title: string;
+  visibility?: string;
+  sourceType?: string;
+  tags?: string[];
+  // Backend accepts both keys; docs historically used notes.
+  notes?: string;
+  description?: string;
+  warnings?: Array<{
+    type: string;
+    severity: number;
+    lat?: number;
+    lon?: number;
+    radiusM?: number;
+    note?: string;
+    validUntil?: string;
+  }>;
+};
+
+export type KakaoLoginRequest = {
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
+  nonce?: string;
+};
+
+export type AuthTokenResponse = {
+  accessToken: string;
+  expiresInSec: number;
+};
+
+export type CourseComment = {
+  id: number;
+  author: {
+    displayName: string;
+  };
+  body: string;
+  createdAt: string;
+  isMine: boolean;
+};
