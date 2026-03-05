@@ -21,10 +21,10 @@ export function RootTabs() {
       screenOptions={{
         headerTitleAlign: 'center',
         headerStyle: { backgroundColor: colors.bgElevated },
-        headerTintColor: colors.text,
-        tabBarStyle: { backgroundColor: colors.bgElevated, borderTopColor: '#163157' },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: '#89a0c1',
+        headerTintColor: colors.ink,
+        tabBarStyle: { backgroundColor: colors.bgElevated, borderTopColor: colors.border },
+        tabBarActiveTintColor: colors.lime,
+        tabBarInactiveTintColor: '#8ea1c0',
       }}
     >
       <Tab.Screen name="Map" component={MapScreen} options={{ title: '지도' }} />

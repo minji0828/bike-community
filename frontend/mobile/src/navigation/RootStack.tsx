@@ -17,7 +17,7 @@ export function RootStack() {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: colors.bgElevated },
-        headerTintColor: colors.text,
+        headerTintColor: colors.ink,
         headerTitleStyle: { fontWeight: '700' },
       }}
     >

@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
+import { colors, radius } from '../theme/tokens';
 import type { PointDto } from '../types/bikeoasis';
 
 type Props = {
@@ -99,18 +100,18 @@ function RouteShapePreview({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    borderRadius: 14,
+    borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#eef4ff',
+    backgroundColor: colors.softBlue,
     borderWidth: 1,
-    borderColor: '#dbe8ff',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4c6692',
+    color: colors.textMuted,
   },
 });
 
