@@ -1,0 +1,9 @@
+{
+  "session_id": "omx-1772686746738-ytggc2",
+  "started_at": "2026-03-05T04:59:06.906Z",
+  "cwd": "/mnt/c/Users/user/Desktop/PROJECT/BIke-project",
+  "pid": 48240,
+  "platform": "linux",
+  "pid_start_ticks": 405501,
+  "pid_cmdline": "node /home/user/.nvm/versions/node/v24.13.1/bin/omx"
+}

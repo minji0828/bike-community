@@ -171,3 +171,18 @@ There is no enforced formatter/linter configured in Gradle. Keep edits consisten
 - Run: `./gradlew test` (or at least the impacted tests)
 - If you touched DB/query logic: run the app and hit the relevant endpoint once
 - Keep changes focused; avoid drive-by refactors unless requested
+
+<!-- OMX:RUNTIME:START -->
+<session_context>
+**Session:** omx-1772686746738-ytggc2 | 2026-03-05T04:59:06.847Z
+
+**Codebase Map:**
+  frontend/: App, babel.config, metro.config, bikeoasis, client, MapWrapper, RouteShapePreview, AppButton, AppCard
+
+**Compaction Protocol:**
+Before context compaction, preserve critical state:
+1. Write progress checkpoint via state_write MCP tool
+2. Save key decisions to notepad via notepad_write_working
+3. If context is >80% full, proactively checkpoint state
+</session_context>
+<!-- OMX:RUNTIME:END -->

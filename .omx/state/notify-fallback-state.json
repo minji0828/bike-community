@@ -1,0 +1,9 @@
+{
+  "pid": 48273,
+  "started_at": "2026-03-05T04:59:06.968Z",
+  "cwd": "/mnt/c/Users/user/Desktop/PROJECT/BIke-project",
+  "notify_script": "/home/user/.nvm/versions/node/v24.13.1/lib/node_modules/oh-my-codex/scripts/notify-hook.js",
+  "poll_ms": 700,
+  "tracked_files": 1,
+  "seen_turns": 0
+}
