@@ -60,6 +60,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // [이유]: 비밀번호 암호화 및 인증 관련 보안 기능을 제공합니다.
 
+    // 8-0. WebSocket(STOMP)
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    // [이유]: 모임 임시 채팅(MVP3) 실시간 통신을 위한 STOMP/WebSocket 지원이 필요합니다.
+
     // 8-1. OAuth2 Resource Server (JWT)
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // [이유]: 서비스 JWT 발급/검증으로 write API(댓글 등)를 보호하기 위함입니다.
