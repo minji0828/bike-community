@@ -3,19 +3,20 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { getCourseDetail, getFeaturedCourses } from '../api/bikeoasis';
 import RouteShapePreview from '../components/RouteShapePreview';
+import { AppCard, AppChip, ScreenContainer } from '../components/ui';
 import type { RootStackParamList } from '../navigation/RootStack';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, spacing, typography } from '../theme/tokens';
 import type { CourseSummary, PointDto } from '../types/bikeoasis';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
@@ -102,35 +103,32 @@ export default function CourseListScreen() {
   );
 
   const renderItem = ({ item }: { item: CourseSummary }) => (
-    <Pressable
-      style={styles.card}
-      onPress={() => navigation.navigate('CourseDetail', { courseId: item.id })}
-    >
-      <RouteShapePreview points={pickPreviewPath(item)} height={96} lineColor="#1e40af" />
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        {item.verifiedStatus ? (
-          <Text style={styles.badge}>{toKoreanVerifiedStatus(item.verifiedStatus)}</Text>
-        ) : null}
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.metaText}>{item.distanceKm.toFixed(1)} km</Text>
-        <Text style={styles.metaText}>{item.estimatedDurationMin}분</Text>
-      </View>
-      {item.tags && item.tags.length > 0 ? (
-        <View style={styles.tagsRow}>
-          {item.tags.map((tag, idx) => (
-            <Text key={idx} style={styles.tag}>
-              #{tag}
-            </Text>
-          ))}
+    <Pressable onPress={() => navigation.navigate('CourseDetail', { courseId: item.id })}>
+      <AppCard style={styles.card}>
+        <RouteShapePreview points={pickPreviewPath(item)} height={104} lineColor="#1452e5" />
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          {item.verifiedStatus ? (
+            <AppChip text={toKoreanVerifiedStatus(item.verifiedStatus)} tone="success" />
+          ) : null}
         </View>
-      ) : null}
+        <View style={styles.row}>
+          <Text style={styles.metaText}>{item.distanceKm.toFixed(1)} km</Text>
+          <Text style={styles.metaText}>{item.estimatedDurationMin}분</Text>
+        </View>
+        {item.tags && item.tags.length > 0 ? (
+          <View style={styles.tagsRow}>
+            {item.tags.map((tag, idx) => (
+              <AppChip key={idx} text={`#${tag}`} />
+            ))}
+          </View>
+        ) : null}
+      </AppCard>
     </Pressable>
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer style={styles.container}>
       {loading && courses.length === 0 ? (
         <ActivityIndicator style={{ marginTop: 24 }} size="large" />
       ) : (
@@ -147,7 +145,7 @@ export default function CourseListScreen() {
           }
         />
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
@@ -155,16 +153,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   list: { padding: spacing.lg, gap: spacing.md },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
     padding: spacing.lg,
-    shadowColor: '#000',
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    elevation: 4,
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: '#dce8ff',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -174,25 +164,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   cardTitle: { fontSize: typography.h2, fontWeight: '800', color: colors.ink },
-  badge: {
-    fontSize: typography.caption,
-    fontWeight: '800',
-    color: '#0f2b5c',
-    backgroundColor: '#dff2ff',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-  },
   row: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm },
-  metaText: { fontSize: typography.body, color: '#35507a', fontWeight: '600' },
+  metaText: { fontSize: typography.body, color: colors.textMuted, fontWeight: '700' },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  tag: {
-    fontSize: typography.caption,
-    color: '#1e3f74',
-    backgroundColor: '#edf3ff',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-  },
-  emptyText: { color: colors.text, textAlign: 'center', marginTop: 32 },
+  emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: 32 },
 });

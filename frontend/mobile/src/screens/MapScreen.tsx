@@ -1,11 +1,12 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Region } from '../components/MapWrapper';
+import { AppButton, AppCard, ScreenContainer } from '../components/ui';
 
 import { getNearbyToilets } from '../api/bikeoasis';
 import { useSettingsStore } from '../state/settingsStore';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, spacing, typography } from '../theme/tokens';
 import type { Toilet } from '../types/bikeoasis';
 
 const DEFAULT_REGION: Region = {
@@ -90,7 +91,7 @@ export default function MapScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer>
       <MapView
         ref={(r: any) => {
           mapRef.current = r;
@@ -110,19 +111,13 @@ export default function MapScreen() {
       </MapView>
 
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <AppCard style={styles.card}>
           <Text style={styles.cardTitle}>주변 화장실</Text>
           <Text style={styles.cardMeta}>반경: {nearbyRadiusMeters}m</Text>
           <View style={styles.row}>
-            <Pressable style={styles.smallButton} onPress={() => bumpRadius(-250)}>
-              <Text style={styles.smallButtonText}>-</Text>
-            </Pressable>
-            <Pressable style={styles.primaryButton} onPress={fetchNearby}>
-              <Text style={styles.primaryButtonText}>새로고침</Text>
-            </Pressable>
-            <Pressable style={styles.smallButton} onPress={() => bumpRadius(250)}>
-              <Text style={styles.smallButtonText}>+</Text>
-            </Pressable>
+            <AppButton label="-" onPress={() => bumpRadius(-250)} variant="ghost" style={styles.compactBtn} />
+            <AppButton label="새로고침" onPress={fetchNearby} variant="secondary" full />
+            <AppButton label="+" onPress={() => bumpRadius(250)} variant="ghost" style={styles.compactBtn} />
           </View>
           <Text style={styles.cardMeta}>검색 결과: {toilets.length}개</Text>
           {loading ? <ActivityIndicator style={{ marginTop: 8 }} /> : null}
@@ -131,14 +126,13 @@ export default function MapScreen() {
               위치 권한이 없어서 서울 시청 기준으로 조회합니다.
             </Text>
           ) : null}
-        </View>
+        </AppCard>
       </View>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
   map: { flex: 1 },
   overlay: {
     position: 'absolute',
@@ -146,35 +140,10 @@ const styles = StyleSheet.create({
     right: spacing.md,
     bottom: spacing.md,
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    elevation: 4,
-  },
+  card: { backgroundColor: colors.mapCard },
   cardTitle: { fontSize: typography.h2, fontWeight: '800', color: colors.ink },
-  cardMeta: { marginTop: spacing.xs, fontSize: typography.caption, color: '#35507a' },
+  cardMeta: { marginTop: spacing.xs, fontSize: typography.caption, color: colors.textMuted },
   warnText: { marginTop: spacing.sm, fontSize: typography.caption, color: colors.danger },
   row: { marginTop: spacing.sm, flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
-  smallButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.softBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  smallButtonText: { fontSize: 18, fontWeight: '900', color: colors.primaryDeep },
-  primaryButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: { fontSize: typography.body, fontWeight: '800', color: '#ffffff' },
+  compactBtn: { width: 48, paddingHorizontal: 0 },
 });

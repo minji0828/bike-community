@@ -17,6 +17,9 @@ type SettingsState = {
   // Used for anonymous ride uploads.
   deviceUuid: string | null;
 
+  // MVP2 auth token (Kakao login exchange result).
+  accessToken: string | null;
+
   markHydrated: () => void;
   ensureDeviceUuid: () => Promise<void>;
 
@@ -24,6 +27,7 @@ type SettingsState = {
   setNearbyRadiusMeters: (meters: number) => void;
   setRouteRadiusMeters: (meters: number) => void;
   setUserId: (userId: number | null) => void;
+  setAccessToken: (token: string | null) => void;
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -37,6 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       userId: null,
       deviceUuid: null,
+      accessToken: null,
 
       markHydrated: () => set({ hasHydrated: true }),
 
@@ -51,6 +56,7 @@ export const useSettingsStore = create<SettingsState>()(
       setNearbyRadiusMeters: (nearbyRadiusMeters) => set({ nearbyRadiusMeters }),
       setRouteRadiusMeters: (routeRadiusMeters) => set({ routeRadiusMeters }),
       setUserId: (userId) => set({ userId }),
+      setAccessToken: (accessToken) => set({ accessToken }),
     }),
     {
       name: 'bikeoasis_settings_v1',
@@ -61,6 +67,7 @@ export const useSettingsStore = create<SettingsState>()(
         routeRadiusMeters: s.routeRadiusMeters,
         userId: s.userId,
         deviceUuid: s.deviceUuid,
+        accessToken: s.accessToken,
       }),
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();

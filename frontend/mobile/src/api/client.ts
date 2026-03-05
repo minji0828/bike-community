@@ -20,7 +20,7 @@ function toQueryString(query?: Query) {
 }
 
 async function request(
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   path: string,
   opts?: {
     query?: Query;
@@ -73,14 +73,36 @@ async function request(
   }
 }
 
-export async function getJson<T>(path: string, query?: Query) {
-  return (await request('GET', path, { query, responseType: 'json' })) as T;
+export async function getJson<T>(
+  path: string,
+  query?: Query,
+  headers?: Record<string, string>
+) {
+  return (await request('GET', path, { query, headers, responseType: 'json' })) as T;
 }
 
-export async function postJson<T>(path: string, body?: unknown, query?: Query) {
-  return (await request('POST', path, { query, body, responseType: 'json' })) as T;
+export async function postJson<T>(
+  path: string,
+  body?: unknown,
+  query?: Query,
+  headers?: Record<string, string>
+) {
+  return (await request('POST', path, { query, body, headers, responseType: 'json' })) as T;
 }
 
-export async function postText(path: string, body?: unknown, query?: Query) {
-  return (await request('POST', path, { query, body, responseType: 'text' })) as string;
+export async function postText(
+  path: string,
+  body?: unknown,
+  query?: Query,
+  headers?: Record<string, string>
+) {
+  return (await request('POST', path, { query, body, headers, responseType: 'text' })) as string;
+}
+
+export async function getText(path: string, query?: Query, headers?: Record<string, string>) {
+  return (await request('GET', path, { query, headers, responseType: 'text' })) as string;
+}
+
+export async function deleteJson<T>(path: string, query?: Query, headers?: Record<string, string>) {
+  return (await request('DELETE', path, { query, headers, responseType: 'json' })) as T;
 }
