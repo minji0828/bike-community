@@ -40,3 +40,4 @@ out/
 src/main/resources/application-local.yml
 backend/src/main/resources/application-local.yml
 frontend/docs/.env
+deploy/env/.env.prod

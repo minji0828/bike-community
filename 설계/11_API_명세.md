@@ -159,8 +159,8 @@ Response (권장)
 
 현재 구현 메모:
 
-- 현재 서버 구현은 `ridingId`(Long) 숫자를 그대로 반환한다(plain number/text).
-- 추후 `ApiResponse`로 통일하는 것을 권장한다.
+- 서버는 `ApiResponse` 래핑 형태를 기본으로 반환한다.
+- 모바일 클라이언트는 과거 plain number 응답과의 호환 파서를 유지한다.
 
 ## 3. Location API
 
@@ -391,3 +391,20 @@ Broadcast payload (topic)
 - POST `/api/v1/admin/courses/{courseId}/warnings`
 - DELETE `/api/v1/admin/warnings/{warningId}`
 - POST `/api/v1/admin/courses/{courseId}/metadata/recalculate`
+
+## 7. 운영/배포 체크용 Health API
+
+- GET `/api/v1/health`
+
+Response
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "status": "UP",
+    "timestamp": "2026-03-05T15:20:00+09:00"
+  }
+}
+```

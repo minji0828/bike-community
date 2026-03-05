@@ -87,6 +87,11 @@ Top-level:
 - Follow its template/filename/progress rules exactly.
 - When finishing a meaningful work unit (tests pass + commit/push), add one report in `work-reports/`.
 
+## Strategy Discussion Rule
+
+- If strategy options are asked to the user, always document each option's advantages/tradeoffs in detail.
+- Save the comparison in docs (for example: `docs/*strategy*.md`) and reference it in the response.
+
 Backend (under `backend/src/main/java/com/bikeoasis/`):
 
 - `domain/<area>/`
