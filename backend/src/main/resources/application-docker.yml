@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bikeoasis}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:bikeoasis-local-dev-secret-key-32bytes-minimum}
+
+poi:
+  fetch:
+    onstartup: false

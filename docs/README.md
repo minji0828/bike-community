@@ -1,5 +1,6 @@
 # Deployment / Operations Docs
 
+- `docs/local-backend-postgis.md`: 로컬(PostGIS) 실행 가이드
 - `docs/mvp1_strategy_options.md`: 전략 옵션 비교(장단점)
 - `docs/deploy-mvp1.md`: 배포 런북
 - `docs/rollback-mvp1.md`: 롤백 런북

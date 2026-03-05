@@ -1,3 +1,7 @@
+# Quick start with docker-compose local DB:
+# 1) docker compose -f backend/docker-compose.local.yml up -d
+# 2) SPRING_PROFILES_ACTIVE=docker ./gradlew bootRun
+
 # Local development overrides (copy to application-local.yml and edit)
 # IMPORTANT: Do not commit application-local.yml (contains secrets).
 
