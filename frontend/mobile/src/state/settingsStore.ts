@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -22,6 +23,7 @@ type SettingsState = {
 
   markHydrated: () => void;
   ensureDeviceUuid: () => Promise<void>;
+  hydrateAccessToken: () => Promise<void>;
 
   setApiBaseUrl: (url: string) => void;
   setNearbyRadiusMeters: (meters: number) => void;
@@ -29,6 +31,32 @@ type SettingsState = {
   setUserId: (userId: number | null) => void;
   setAccessToken: (token: string | null) => void;
 };
+
+const ACCESS_TOKEN_KEY = 'bikeoasis_access_token_v1';
+
+async function readAccessTokenFromSecureStore() {
+  try {
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    if (!token) return null;
+    const trimmed = token.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  } catch (e) {
+    console.warn('SecureStore getItem failed', e);
+    return null;
+  }
+}
+
+async function writeAccessTokenToSecureStore(token: string | null) {
+  try {
+    if (!token || token.trim().length === 0) {
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      return;
+    }
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+  } catch (e) {
+    console.warn('SecureStore setItem failed', e);
+  }
+}
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
@@ -52,11 +80,19 @@ export const useSettingsStore = create<SettingsState>()(
         set({ deviceUuid: id });
       },
 
+      hydrateAccessToken: async () => {
+        const token = await readAccessTokenFromSecureStore();
+        set({ accessToken: token });
+      },
+
       setApiBaseUrl: (apiBaseUrl) => set({ apiBaseUrl }),
       setNearbyRadiusMeters: (nearbyRadiusMeters) => set({ nearbyRadiusMeters }),
       setRouteRadiusMeters: (routeRadiusMeters) => set({ routeRadiusMeters }),
       setUserId: (userId) => set({ userId }),
-      setAccessToken: (accessToken) => set({ accessToken }),
+      setAccessToken: (accessToken) => {
+        set({ accessToken });
+        void writeAccessTokenToSecureStore(accessToken);
+      },
     }),
     {
       name: 'bikeoasis_settings_v1',
@@ -67,10 +103,10 @@ export const useSettingsStore = create<SettingsState>()(
         routeRadiusMeters: s.routeRadiusMeters,
         userId: s.userId,
         deviceUuid: s.deviceUuid,
-        accessToken: s.accessToken,
       }),
       onRehydrateStorage: () => (state) => {
         state?.markHydrated();
+        void state?.hydrateAccessToken();
       },
     }
   )
