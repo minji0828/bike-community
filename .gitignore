@@ -38,3 +38,4 @@ out/
 
 ### Local config (do not commit secrets) ###
 src/main/resources/application-local.yml
+backend/src/main/resources/application-local.yml
