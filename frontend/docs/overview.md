@@ -11,6 +11,7 @@ BikeOasis mobile focuses on one clear commuter flow:
 - Mobility utility first (fast, practical)
 - Swing-like urban confidence + GCOO-like clear accessibility
 - Map-centric UI with compact actionable overlays
+- Bright day-time readability first (outdoor visibility prioritized)
 
 ## MVP scope (current implementation target)
 

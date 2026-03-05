@@ -46,6 +46,7 @@ Core UI:
 - Route map preview with start/end markers
 - Metadata strip (distance, duration, loop, toilets)
 - Warning list
+- Community comments (list/create/delete/report)
 - CTA: Start Following
 
 ## 4) Course Follow
@@ -91,3 +92,5 @@ Core UI:
 - Nearby/route radius configuration
 - Optional userId for location APIs
 - Device UUID display + copy button
+- Kakao code exchange form (`/api/v1/auth/kakao`)
+- Access token persistence for comment write actions

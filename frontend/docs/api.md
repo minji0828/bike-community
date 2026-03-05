@@ -1,6 +1,6 @@
 # API Mapping (Backend 1:1)
 
-This document maps the current mobile frontend to the actual backend controller code (`src/main/java/com/bikeoasis/domain/**/controller`).
+This document maps the current mobile frontend to the actual backend controller code (`backend/src/main/java/com/bikeoasis/domain/**/controller`).
 
 Base URL examples:
 
@@ -73,12 +73,56 @@ Base URL examples:
 #### `POST /api/v1/courses/{courseId}/share`
 
 - Response `data`: `{ "shareId": string }`
-- Used by: reserved for next UI increment (share button)
+- Used by: API layer wired (`issueCourseShare`), UI pending
+
+#### `GET /api/v1/courses/{courseId}/gpx`
+
+- Response: raw GPX XML (`application/gpx+xml`)
+- Used by: API layer wired (`getCourseGpx`), UI pending
 
 #### `GET /api/v1/courses/public/{shareId}`
 
 - Response `data`: `CourseDetailResponse`
 - Used by: reserved for deep-link/shared course entry
+
+### Auth (MVP2)
+
+#### `POST /api/v1/auth/kakao`
+
+- Body: `KakaoLoginRequest`
+  - `code`, `codeVerifier`, `redirectUri`, optional `nonce`
+- Response `data`: `AuthTokenResponse`
+  - `accessToken`, `expiresInSec`
+- Used by: `Settings` screen code-exchange helper
+
+### Course Comment (MVP2)
+
+#### `GET /api/v1/courses/{courseId}/comments`
+
+- Query: optional `cursor`, `limit`
+- Response `data`: `CourseCommentResponse[]`
+  - `id`, `author.displayName`, `body`, `createdAt`, `isMine`
+- Used by: `Course detail` comments section
+
+#### `POST /api/v1/courses/{courseId}/comments`
+
+- Auth required: `Authorization: Bearer <token>`
+- Body: `{ "body": string }`
+- Response `data`: `{ "commentId": number }`
+- Used by: `Course detail` comment write
+
+#### `DELETE /api/v1/comments/{commentId}`
+
+- Auth required
+- Response `data`: `"deleted"`
+- Used by: `Course detail` own-comment delete
+
+#### `POST /api/v1/comments/{commentId}/reports`
+
+- Auth required
+- Body: `{ "reason": string, "note": string }`
+- Response `data`: `{ "reportId": number }`
+- Used by: `Course detail` comment report
 
 ## Future-ready endpoints (not fully exposed in current UI)
 

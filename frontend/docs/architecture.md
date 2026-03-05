@@ -37,9 +37,18 @@ Build a frontend that is stable for MVP delivery now, but can scale without rewr
 
 ## Design system direction (Swing x GCOO inspired)
 
-- Visual tone: urban mobility dashboard (deep navy base + electric accent + mint safety accent)
+- Visual tone: bright outdoor dashboard (sky-tinted background + white cards + electric accent + mint safety accent)
 - Information style: high-contrast status chips, map-first layout, floating action cards
 - Interaction style: quick, glove-friendly controls (large press targets, clear hierarchy)
+
+### Shared UI primitives
+
+- `src/components/ui/AppButton.tsx`
+- `src/components/ui/AppCard.tsx`
+- `src/components/ui/AppChip.tsx`
+- `src/components/ui/ScreenContainer.tsx`
+
+All major screens should compose these primitives first, and only add screen-local styles for layout differences.
 
 ## Target folder shape (next refactor stage)
 

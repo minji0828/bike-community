@@ -8,5 +8,6 @@ These docs describe how the React Native app is structured and how it maps to th
 - `frontend/docs/architecture.md`: code structure, state, networking
 - `frontend/docs/dev-setup.md`: local development notes
 - `frontend/docs/frontend-playbook.md`: frontend engineering/development rules
+- `frontend/docs/design-tokens.md`: design token reference and usage rules
 
 Note: the backend currently exposes POI + riding endpoints that do not require auth. User-related endpoints exist only partially, so the mobile app treats user features as "future".
