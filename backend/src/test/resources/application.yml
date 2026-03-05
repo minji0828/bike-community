@@ -1,0 +1,9 @@
+app:
+  jwt:
+    # 32+ bytes dummy secret for tests
+    secret: "test-test-test-test-test-test-test-test"
+    issuer: "bikeoasis"
+
+kakao:
+  oauth:
+    client-id: "test"

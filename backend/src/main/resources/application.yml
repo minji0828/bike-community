@@ -31,6 +31,26 @@ course:
       title: 동부5고개 (벗서명다유)
       featured-rank: 1
 
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:}
+    issuer: bikeoasis
+    access-token-exp-seconds: 3600
+    audience: ${APP_JWT_AUDIENCE:}
+
+kakao:
+  oauth:
+    client-id: ${KAKAO_REST_API_KEY:}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
+    issuer: https://kauth.kakao.com
+    jwk-set-uri: https://kauth.kakao.com/.well-known/jwks.json
+    token-uri: https://kauth.kakao.com/oauth/token
+
+admin:
+  api:
+    key: ${ADMIN_API_KEY:}
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bikeoasis}

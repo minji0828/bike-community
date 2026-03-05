@@ -1,24 +1,34 @@
 # Local development overrides (copy to application-local.yml and edit)
 # IMPORTANT: Do not commit application-local.yml (contains secrets).
 
-api:
-  seoul:
-    key: "PUT-YOUR-SEOUL-API-KEY-HERE"
-
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/bikeoasis
     username: postgres
     password: "PUT-YOUR-DB-PASSWORD-HERE"
 
+api:
+  seoul:
+    key: "PUT-YOUR-SEOUL-API-KEY-HERE"
+
+app:
+  jwt:
+    # Must be 32+ bytes for HS256
+    secret: "PUT-YOUR-APP-JWT-SECRET-32BYTES-MIN"
+    # Optional: set to differentiate environments
+    audience: "bikeoasis-mobile"
+
+kakao:
+  oauth:
+    client-id: "PUT-YOUR-KAKAO-REST-API-KEY"
+    client-secret: "PUT-YOUR-KAKAO-CLIENT-SECRET-IF-USED"
+    # Comma-separated exact matches
+    allowed-redirect-uris: "bikeoasis://oauth,kakaoxxxxx://oauth"
+
+admin:
+  api:
+    key: "PUT-YOUR-ADMIN-API-KEY"
+
 poi:
   fetch:
-    onstartup: true
-
-course:
-  seed:
-    gpx:
-      onstartup: true
-      path: 설계/자료/동부5고개.gpx
-      title: 동부5고개 (벗서명다유)
-      featured-rank: 1
+    onstartup: false

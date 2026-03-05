@@ -60,6 +60,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // [이유]: 비밀번호 암호화 및 인증 관련 보안 기능을 제공합니다.
 
+    // 8-1. OAuth2 Resource Server (JWT)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // [이유]: 서비스 JWT 발급/검증으로 write API(댓글 등)를 보호하기 위함입니다.
+
     // 9. Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     // [이유]: 유저가 보낸 위경도 값이 유효한지, UUID가 비어있지는 않은지 등 데이터 검증을 위해 필요합니다.
