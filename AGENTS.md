@@ -80,6 +80,13 @@ Top-level:
 - `frontend/`: design docs + React Native/Expo app (secondary, but consider API contract impact)
 - `work-reports/`, `설계/`: project artifacts/docs
 
+## Work Report Rules (Important)
+
+- Before writing any new work report, always read:
+  - `work-reports/README.md`
+- Follow its template/filename/progress rules exactly.
+- When finishing a meaningful work unit (tests pass + commit/push), add one report in `work-reports/`.
+
 Backend (under `backend/src/main/java/com/bikeoasis/`):
 
 - `domain/<area>/`
