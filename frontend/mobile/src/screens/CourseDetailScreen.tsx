@@ -241,6 +241,13 @@ export default function CourseDetailScreen() {
         label="코스 따라가기 시작"
         full
       />
+      <AppButton
+        style={styles.meetupBtn}
+        variant="secondary"
+        onPress={() => navigation.navigate('CourseMeetup', { courseId: course.id })}
+        label="코스 모임/채팅"
+        full
+      />
 
       <AppCard>
         <View style={styles.commentHeader}>
@@ -351,6 +358,8 @@ const styles = StyleSheet.create({
   },
   followBtn: {
     marginTop: spacing.lg,
+  },
+  meetupBtn: {
     marginBottom: spacing.md,
   },
   commentHeader: {

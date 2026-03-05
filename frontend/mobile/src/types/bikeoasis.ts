@@ -126,3 +126,33 @@ export type CourseComment = {
   createdAt: string;
   isMine: boolean;
 };
+
+export type CourseMeetup = {
+  meetupId: number;
+  courseId: number;
+  title: string;
+  status: string;
+  startAt: string;
+  meetingPointLat?: number | null;
+  meetingPointLon?: number | null;
+  capacity?: number | null;
+  participantCount: number;
+  joined: boolean;
+  host: boolean;
+};
+
+export type CourseMeetupCreateRequest = {
+  title: string;
+  startAt: string;
+  meetingPointLat?: number;
+  meetingPointLon?: number;
+  capacity?: number;
+};
+
+export type MeetupChatMessage = {
+  messageId: string;
+  meetupId: number;
+  authorDisplayName: string;
+  body: string;
+  sentAt: string;
+};

@@ -2,12 +2,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootTabs } from './RootTabs';
 import CourseDetailScreen from '../screens/CourseDetailScreen';
 import CourseFollowScreen from '../screens/CourseFollowScreen';
+import CourseMeetupScreen from '../screens/CourseMeetupScreen';
 import { colors } from '../theme/tokens';
 
 export type RootStackParamList = {
   Tabs: undefined;
   CourseDetail: { courseId: number };
   CourseFollow: { courseId: number };
+  CourseMeetup: { courseId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,11 @@ export function RootStack() {
         name="CourseFollow" 
         component={CourseFollowScreen} 
         options={{ title: '코스 따라가기', headerTitleAlign: 'center' }} 
+      />
+      <Stack.Screen
+        name="CourseMeetup"
+        component={CourseMeetupScreen}
+        options={{ title: '코스 모임/채팅', headerTitleAlign: 'center' }}
       />
     </Stack.Navigator>
   );

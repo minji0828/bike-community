@@ -9,6 +9,7 @@ type SettingsState = {
   hasHydrated: boolean;
 
   apiBaseUrl: string;
+  adminApiKey: string;
   nearbyRadiusMeters: number;
   routeRadiusMeters: number;
 
@@ -26,6 +27,7 @@ type SettingsState = {
   hydrateAccessToken: () => Promise<void>;
 
   setApiBaseUrl: (url: string) => void;
+  setAdminApiKey: (key: string) => void;
   setNearbyRadiusMeters: (meters: number) => void;
   setRouteRadiusMeters: (meters: number) => void;
   setUserId: (userId: number | null) => void;
@@ -63,7 +65,8 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       hasHydrated: false,
 
-      apiBaseUrl: 'http://localhost:8080',
+      apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8080',
+      adminApiKey: process.env.EXPO_PUBLIC_ADMIN_API_KEY || '',
       nearbyRadiusMeters: 500,
       routeRadiusMeters: 100,
 
@@ -86,6 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setApiBaseUrl: (apiBaseUrl) => set({ apiBaseUrl }),
+      setAdminApiKey: (adminApiKey) => set({ adminApiKey }),
       setNearbyRadiusMeters: (nearbyRadiusMeters) => set({ nearbyRadiusMeters }),
       setRouteRadiusMeters: (routeRadiusMeters) => set({ routeRadiusMeters }),
       setUserId: (userId) => set({ userId }),
@@ -99,6 +103,7 @@ export const useSettingsStore = create<SettingsState>()(
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         apiBaseUrl: s.apiBaseUrl,
+        adminApiKey: s.adminApiKey,
         nearbyRadiusMeters: s.nearbyRadiusMeters,
         routeRadiusMeters: s.routeRadiusMeters,
         userId: s.userId,

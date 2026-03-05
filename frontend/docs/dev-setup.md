@@ -15,6 +15,8 @@ From `frontend/mobile/`:
 1. Install deps: `npm install`
 2. Start: `npm run start`
 3. Web preview (optional): `npx expo start --web --port 8081`
+4. Type check: `npm run typecheck`
+5. Web build (배포용): `npm run build:web`
 
 ## Web map provider
 
@@ -25,6 +27,9 @@ Example `.env` in `frontend/mobile`:
 
 ```env
 EXPO_PUBLIC_KAKAO_MAP_APP_KEY=YOUR_KAKAO_JAVASCRIPT_KEY
+EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN
+# Optional (운영자만)
+EXPO_PUBLIC_ADMIN_API_KEY=YOUR_ADMIN_API_KEY
 ```
 
 After setting, restart Expo with cache clear:

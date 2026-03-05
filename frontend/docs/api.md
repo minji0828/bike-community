@@ -20,7 +20,8 @@ Base URL examples:
 }
 ```
 
-- Exception: `POST /api/v1/ridings` returns raw `Long` (ridingId), not `ApiResponse` wrapper.
+- `POST /api/v1/ridings` now also returns wrapped shape (`{ data: { ridingId } }`).
+- Mobile client keeps fallback parsing for legacy raw-number responses.
 
 ## Mobile-used endpoints
 
@@ -47,7 +48,7 @@ Base URL examples:
 
 - Body: `RidingCreateRequest`
   - `deviceUuid`, `userId`, `title`, `totalDistance`, `totalTime`, `avgSpeed`, `path`
-- Response: raw numeric `ridingId`
+- Response `data`: `{ "ridingId": number }`
 - Used by: `Ride` screen submit flow
 
 ### Course
@@ -126,6 +127,32 @@ Base URL examples:
 - Body: `{ "reason": string, "note": string }`
 - Response `data`: `{ "reportId": number }`
 - Used by: `Course detail` comment report
+
+### Meetup + Chat (MVP3)
+
+#### `GET /api/v1/courses/{courseId}/meetups?status=all`
+- Response `data`: `CourseMeetupResponse[]`
+- Used by: `Course meetup` screen list
+
+#### `POST /api/v1/courses/{courseId}/meetups`
+- Auth required
+- Body: `{ title, startAt, meetingPointLat?, meetingPointLon?, capacity? }`
+- Response `data`: `{ meetupId }`
+
+#### `POST /api/v1/meetups/{meetupId}/join`
+#### `POST /api/v1/meetups/{meetupId}/leave`
+- Auth required
+- Used by: `Course meetup` screen join/leave
+
+#### STOMP `/ws-stomp`
+- Header: `Authorization: Bearer <token>` on CONNECT
+- Publish:
+  - `/app/meetups/{meetupId}/chat.send`
+  - `/app/meetups/{meetupId}/chat.history`
+- Subscribe:
+  - `/topic/meetups/{meetupId}/chat`
+  - `/user/queue/meetups/{meetupId}/chat.history`
+- Used by: `Course meetup` screen chat
 
 ## Future-ready endpoints (not fully exposed in current UI)
 

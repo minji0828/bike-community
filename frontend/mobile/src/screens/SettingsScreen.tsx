@@ -18,6 +18,8 @@ import { colors, spacing, typography } from '../theme/tokens';
 export default function SettingsScreen() {
   const apiBaseUrl = useSettingsStore((s) => s.apiBaseUrl);
   const setApiBaseUrl = useSettingsStore((s) => s.setApiBaseUrl);
+  const adminApiKey = useSettingsStore((s) => s.adminApiKey);
+  const setAdminApiKey = useSettingsStore((s) => s.setAdminApiKey);
   const nearbyRadiusMeters = useSettingsStore((s) => s.nearbyRadiusMeters);
   const setNearbyRadiusMeters = useSettingsStore((s) => s.setNearbyRadiusMeters);
   const routeRadiusMeters = useSettingsStore((s) => s.routeRadiusMeters);
@@ -89,7 +91,7 @@ export default function SettingsScreen() {
   const triggerToiletSync = async (mode: 'auto' | 'incremental' | 'full') => {
     setSyncing(mode);
     try {
-      const message = await syncToilets(mode);
+      const message = await syncToilets(mode, adminApiKey);
       Alert.alert('동기화 완료', message);
     } catch (e: any) {
       Alert.alert('동기화 실패', String(e?.message ?? e));
@@ -116,6 +118,15 @@ export default function SettingsScreen() {
         <Text style={styles.hint}>
           Android 에뮬레이터는 로컬 서버 접속 시 `http://10.0.2.2:8080`을 사용합니다.
         </Text>
+        <Text style={[styles.label, { marginTop: spacing.md }]}>관리자 API 키 (선택)</Text>
+        <TextInput
+          value={adminApiKey}
+          onChangeText={setAdminApiKey}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder="X-Admin-Key"
+          style={styles.input}
+        />
         <AppButton
           style={{ marginTop: spacing.sm }}
           onPress={testConnection}
