@@ -5,3 +5,5 @@
 - `docs/rollback-mvp1.md`: 롤백 런북
 - `docs/e2e-mvp1-checklist.md`: 실사용 E2E 체크리스트
 - `docs/cicd-secrets.md`: GitHub Secrets 설정 가이드
+- `docs/github-actions-usage.md`: GitHub Actions 실행/점검 가이드
+- `docs/monitoring-phase2.md`: Prometheus/Loki/Grafana 2단계 도입 가이드

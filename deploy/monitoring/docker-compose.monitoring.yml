@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: bikeoasis-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../runtime/monitoring/prometheus:/prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - bikeoasis-monitoring
+      - bikeoasis-app
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: bikeoasis-loki
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro
+      - ../runtime/monitoring/loki:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    networks:
+      - bikeoasis-monitoring
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    container_name: bikeoasis-promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../runtime/monitoring/promtail:/var/log/promtail
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - bikeoasis-monitoring
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: bikeoasis-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ../runtime/monitoring/grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+    restart: unless-stopped
+    networks:
+      - bikeoasis-monitoring
+
+networks:
+  bikeoasis-monitoring:
+    driver: bridge
+  bikeoasis-app:
+    external: true
+    name: ${BIKEOASIS_APP_NETWORK:-deploy_bikeoasis-net}

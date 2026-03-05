@@ -3,6 +3,7 @@
 ## 1. 사전 준비
 - EC2(Ubuntu) 1대, RDS(PostgreSQL) 1개
 - 도메인 + DNS A 레코드(EC2 공인 IP)
+- S3 버킷 1개(GPX 원문 저장)
 - EC2 설치
   - Docker, Docker Compose v2
   - Git, curl
@@ -28,6 +29,12 @@ cp deploy/env/.env.prod.example deploy/env/.env.prod
 - `KAKAO_*`
 - `ADMIN_API_KEY`
 - `SEOUL_API_KEY`
+- `COURSE_GPX_STORAGE_MODE=s3`
+- `COURSE_GPX_S3_BUCKET`
+- `COURSE_GPX_S3_REGION`
+
+권장:
+- EC2에 IAM Role 부여(S3 Put/Get 권한)
 
 ## 4. 초기 기동
 ```bash
@@ -69,3 +76,16 @@ deploy/scripts/enable_https.sh your.domain.com
 - `curl http://<domain>/api/v1/health`
 - 웹 접속: `https://<domain>/`
 - 코스/댓글/모임 API smoke 확인
+- GPX 조회 확인: `GET /api/v1/courses/{id}/gpx`
+
+## 9. GitHub Actions 수동 배포 사용법
+1) GitHub 저장소 → **Actions** → `Deploy Production (EC2)`
+2) **Run workflow** 클릭
+3) 입력값 선택
+   - `deploy_backend`: 백엔드 배포 여부
+   - `deploy_frontend`: 프론트 웹 배포 여부
+4) `production` 환경 보호 규칙(승인자)이 있으면 승인 후 실행
+5) 로그에서 다음 단계 확인
+   - EC2 파일 업로드
+   - `deploy_backend.sh` 실행 여부
+   - `deploy_frontend.sh` 실행 여부
