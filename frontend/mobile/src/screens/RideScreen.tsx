@@ -297,8 +297,8 @@ export default function RideScreen() {
 
         {toilets.map((t) => (
           <Marker
-            key={`${t.name}-${t.latitude}-${t.longitude}`}
-            coordinate={{ latitude: t.latitude, longitude: t.longitude }}
+            key={`${t.name}-${t.lat}-${t.lon}`}
+            coordinate={{ latitude: t.lat, longitude: t.lon }}
             title={t.name}
             description={`${t.address}\n${t.openingHours}`}
           />

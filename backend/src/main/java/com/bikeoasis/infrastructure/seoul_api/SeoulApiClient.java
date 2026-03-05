@@ -48,16 +48,17 @@ public class SeoulApiClient {
      */
     public SeoulToiletApiResponse fetchToiletData(int startIndex, int endIndex) {
         String url = buildUrl(startIndex, endIndex);
-        return callApiWithRetry(url);
+        return callApiWithRetry(startIndex, endIndex, url);
     }
 
     /**
      * 단일 API 호출 (내부용)
      */
-    private SeoulToiletApiResponse callApiWithRetry(String url) {
+    private SeoulToiletApiResponse callApiWithRetry(int startIndex, int endIndex, String url) {
         for (int attempt = 1; attempt <= retryCount; attempt++) {
             try {
-                log.info("API 호출 시도 {}/{}: {}", attempt, retryCount, url);
+                log.info("서울 공공 API 호출 시도 {}/{} (service={}, range={}~{})",
+                        attempt, retryCount, SERVICE_NAME, startIndex, endIndex);
                 ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {

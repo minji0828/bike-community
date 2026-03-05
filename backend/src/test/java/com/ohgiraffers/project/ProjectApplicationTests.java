@@ -3,7 +3,9 @@ package com.ohgiraffers.project;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ContextConfiguration;
 
+import com.bikeoasis.Main;
 import com.bikeoasis.domain.poi.controller.PoiController;
 import com.bikeoasis.domain.poi.service.PoiService;
 import com.bikeoasis.domain.riding.controller.RidingController;
@@ -12,6 +14,7 @@ import com.bikeoasis.domain.user.controller.LocationController;
 import com.bikeoasis.domain.user.controller.UserController;
 import com.bikeoasis.domain.user.service.LocationService;
 import com.bikeoasis.domain.user.service.UserService;
+import com.bikeoasis.global.admin.AdminKeyAuthService;
 
 @WebMvcTest(controllers = {
         PoiController.class,
@@ -19,6 +22,7 @@ import com.bikeoasis.domain.user.service.UserService;
         LocationController.class,
         UserController.class
 })
+@ContextConfiguration(classes = Main.class)
 class ProjectApplicationTests {
 
     @MockBean
@@ -32,6 +36,9 @@ class ProjectApplicationTests {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private AdminKeyAuthService adminKeyAuthService;
 
     @Test
     void contextLoads() {

@@ -10,7 +10,7 @@ Build a frontend that is stable for MVP delivery now, but can scale without rewr
 - React Navigation (tabs + stack)
 - `fetch` API client wrapper (`src/api/client.ts`)
 - Zustand persisted settings store (`src/state/settingsStore.ts`)
-- AsyncStorage for local persistence
+- AsyncStorage (general settings) + SecureStore (auth token)
 
 ## Practical architecture baseline (adopted)
 
@@ -26,12 +26,13 @@ Build a frontend that is stable for MVP delivery now, but can scale without rewr
 ### 2) API mapping policy
 
 - Frontend endpoint calls must map 1:1 to active backend controller methods.
-- No speculative endpoint call (example: removed `/courses/from-riding`, replaced with real `POST /api/v1/courses`).
+- No speculative endpoint call (example: use real `POST /api/v1/courses/from-riding` for ride-save flow).
 - DTO naming in frontend mirrors backend response intent.
 
 ### 3) State policy
 
-- Persist only durable configuration (`apiBaseUrl`, `radius`, `userId`, `deviceUuid`).
+- Persist durable configuration (`apiBaseUrl`, `radius`, `userId`, `deviceUuid`) in AsyncStorage.
+- Persist auth token in SecureStore.
 - Keep volatile ride tracking state in screen scope for MVP.
 - Move to dedicated ride store/hook only when background tracking is introduced.
 

@@ -1,4 +1,4 @@
-package com;
+package main.java.com.bikeoasis;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -256,12 +256,20 @@ public class CourseService {
     }
 
     @Transactional
-    public String issueShareId(Long courseId) {
+    public String issueShareId(Long courseId, Long requesterUserId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(404, "코스를 찾을 수 없습니다."));
 
-        if (course.getVisibility() == CourseVisibility.PRIVATE) {
-            course.setVisibility(CourseVisibility.UNLISTED);
+        if (requesterUserId == null) {
+            throw new BusinessException(401, "인증이 필요합니다.");
+        }
+
+        if (course.getOwnerUserId() == null) {
+            throw new BusinessException(403, "공유 링크 발급 권한이 없습니다.");
+        }
+
+        if (!course.getOwnerUserId().equals(requesterUserId)) {
+            throw new BusinessException(403, "코스 소유자만 공유 링크를 발급할 수 있습니다.");
         }
 
         if (course.getShareId() == null || course.getShareId().isBlank()) {

@@ -72,7 +72,7 @@ Primary APIs:
 
 - `POST /api/v1/ridings`
 - `POST /api/v1/pois/along-route`
-- `POST /api/v1/courses`
+- `POST /api/v1/courses/from-riding`
 
 Core UI:
 
@@ -80,7 +80,7 @@ Core UI:
 - Time/distance live metrics
 - Start/Stop/Submit/Clear controls
 - Post-submit metrics (rideId, toilets count)
-- Save as Course action (path upload mapped to backend course create request)
+- Save as Course action (ridingId 기반 코스 생성)
 
 ## 6) Settings
 

@@ -2,6 +2,7 @@ package com.bikeoasis.domain.poi.controller;
 
 import com.bikeoasis.domain.poi.dto.ToiletResponseDto;
 import com.bikeoasis.domain.poi.service.PoiService;
+import com.bikeoasis.global.admin.AdminKeyAuthService;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PoiController {
     private final PoiService poiService;
+    private final AdminKeyAuthService adminKeyAuthService;
 
     @PostMapping("/sync/full")
     @Operation(summary = "화장실 데이터 전체 새로고침", description = "기존 데이터 삭제 후 최신 화장실 정보를 새로 적재합니다. (초기 구축/대대적 업데이트 용)")
-    public ResponseEntity<ApiResponse<String>> syncToiletsFullRefresh() {
+    public ResponseEntity<ApiResponse<String>> syncToiletsFullRefresh(
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey
+    ) {
+        adminKeyAuthService.requireAdmin(adminKey);
         try {
             poiService.fetchAndSaveSeoulToiletsFullRefresh();
             return ResponseEntity.ok(ApiResponse.success("화장실 데이터 전체 새로고침 완료"));
@@ -36,7 +41,10 @@ public class PoiController {
 
     @PostMapping("/sync/incremental")
     @Operation(summary = "화장실 데이터 증분 동기화", description = "변경사항만 반영하여 DB를 업데이트합니다. (일일 정기 동기화 용)")
-    public ResponseEntity<ApiResponse<String>> syncToiletsIncremental() {
+    public ResponseEntity<ApiResponse<String>> syncToiletsIncremental(
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey
+    ) {
+        adminKeyAuthService.requireAdmin(adminKey);
         try {
             poiService.fetchAndSaveSeoulToiletsIncremental();
             return ResponseEntity.ok(ApiResponse.success("화장실 데이터 증분 동기화 완료"));
@@ -49,7 +57,10 @@ public class PoiController {
 
     @PostMapping("/sync/toilets")
     @Operation(summary = "화장실 데이터 동기화 (자동 모드)", description = "설정된 동기화 모드(전체/증분)에 따라 자동으로 동기화합니다.")
-    public ResponseEntity<ApiResponse<String>> syncToilets() {
+    public ResponseEntity<ApiResponse<String>> syncToilets(
+            @RequestHeader(value = "X-Admin-Key", required = false) String adminKey
+    ) {
+        adminKeyAuthService.requireAdmin(adminKey);
         try {
             poiService.fetchAndSaveSeoulToilets();
             return ResponseEntity.ok(ApiResponse.success("화장실 데이터 동기화 완료"));

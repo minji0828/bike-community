@@ -8,12 +8,15 @@ import com.bikeoasis.domain.course.dto.CourseFromRidingCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseGpxCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseShareResponse;
 import com.bikeoasis.domain.course.service.CourseService;
+import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -76,8 +79,12 @@ public class CourseController {
 
     @PostMapping("/{courseId}/share")
     @Operation(summary = "코스 공유 링크 발급", description = "코스 공유용 shareId를 생성합니다.")
-    public ResponseEntity<ApiResponse<CourseShareResponse>> issueShare(@PathVariable Long courseId) {
-        String shareId = courseService.issueShareId(courseId);
+    public ResponseEntity<ApiResponse<CourseShareResponse>> issueShare(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        Long requesterUserId = requireUserId(jwt);
+        String shareId = courseService.issueShareId(courseId, requesterUserId);
         return ResponseEntity.ok(ApiResponse.success(new CourseShareResponse(shareId)));
     }
 
@@ -95,5 +102,22 @@ public class CourseController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, "application/gpx+xml; charset=UTF-8")
                 .body(gpx);
+    }
+
+    private Long requireUserId(Jwt jwt) {
+        if (jwt == null) {
+            throw new BusinessException(401, "인증이 필요합니다.");
+        }
+
+        String sub = jwt.getSubject();
+        if (sub == null || sub.isBlank()) {
+            throw new BusinessException(401, "인증이 필요합니다.");
+        }
+
+        try {
+            return Long.parseLong(sub);
+        } catch (NumberFormatException e) {
+            throw new BusinessException(401, "유효하지 않은 인증 토큰입니다.");
+        }
     }
 }

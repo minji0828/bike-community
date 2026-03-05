@@ -30,6 +30,7 @@ Base URL examples:
 
 - Query: `lat`, `lon`, `radius` (default backend = `500`)
 - Response `data`: `ToiletResponseDto[]`
+  - Shape: `{ name, address, lat, lon, openingHours }`
 - Used by: `Map` screen
 
 #### `POST /api/v1/pois/along-route`
@@ -37,6 +38,7 @@ Base URL examples:
 - Query: `radius` (default backend = `100`)
 - Body: `[{ lat, lon }]`
 - Response `data`: `ToiletResponseDto[]`
+  - Shape: `{ name, address, lat, lon, openingHours }`
 - Used by: `Ride` screen after submit
 
 ### Riding
@@ -63,15 +65,16 @@ Base URL examples:
   - `id`, `title`, `visibility`, `sourceType`, `verifiedStatus`, `distanceKm`, `estimatedDurationMin`, `loop`, `amenitiesSummary`, `tags`, `warnings`, `path`
 - Used by: `Course detail` and `Course follow`
 
-#### `POST /api/v1/courses`
+#### `POST /api/v1/courses/from-riding`
 
-- Body: `CourseCreateRequest`
-  - `ownerUserId`, `deviceUuid`, `title`, `description`, `visibility`, `sourceType`, `path`, `tags`, `warnings`
+- Body: `CourseFromRidingCreateRequest`
+  - `ridingId`, `title`, `visibility`, `sourceType`, `tags`, `notes|description`, `warnings`
 - Response `data`: `{ "courseId": number }`
 - Used by: `Ride` screen "Save as course"
 
 #### `POST /api/v1/courses/{courseId}/share`
 
+- Auth required: `Authorization: Bearer <token>`
 - Response `data`: `{ "shareId": string }`
 - Used by: API layer wired (`issueCourseShare`), UI pending
 

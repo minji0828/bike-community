@@ -27,7 +27,7 @@ BikeOasis mobile focuses on one clear commuter flow:
   - Start/stop path recording
   - Ride upload (`POST /api/v1/ridings`)
   - Along-route toilet query (`POST /api/v1/pois/along-route`)
-  - Course creation from recorded path (`POST /api/v1/courses`)
+  - Course creation from recorded ride (`POST /api/v1/courses/from-riding`)
 - Settings
   - API base URL configuration
   - Radius configuration

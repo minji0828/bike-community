@@ -15,7 +15,8 @@ This playbook defines the practical engineering standard for the mobile frontend
 
 ## 3) State rule
 
-- Persist only durable values: base URL, radius config, `deviceUuid`, optional `userId`.
+- Persist durable values (base URL, radius config, `deviceUuid`, optional `userId`) in AsyncStorage.
+- Persist auth token only in SecureStore.
 - Keep high-frequency live values (`path`, GPS ticks) in screen/hook state for MVP.
 
 ## 4) UI rule

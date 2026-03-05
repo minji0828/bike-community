@@ -22,11 +22,14 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // 테스트를 위해 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/share").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/meetups").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/comments/*").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/comments/*/reports").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/meetups/*/join").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/meetups/*/leave").authenticated()
+                        .requestMatchers("/api/v1/locations/nearby").permitAll()
+                        .requestMatchers("/api/v1/locations/**").authenticated()
                         .anyRequest().permitAll() // 그 외 요청 허용
                 );
 

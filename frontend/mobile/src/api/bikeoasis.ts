@@ -38,6 +38,21 @@ function normalizePoint(raw: any): PointDto {
   };
 }
 
+function normalizeToilet(raw: any): Toilet {
+  const latitude = asNumber(raw?.latitude ?? raw?.lat);
+  const longitude = asNumber(raw?.longitude ?? raw?.lon ?? raw?.lng);
+
+  return {
+    name: String(raw?.name ?? ''),
+    address: String(raw?.address ?? ''),
+    latitude,
+    longitude,
+    lat: latitude,
+    lon: longitude,
+    openingHours: String(raw?.openingHours ?? ''),
+  } as Toilet;
+}
+
 function normalizeCourseSummary(raw: any): CourseSummary {
   const previewPath = Array.isArray(raw?.path)
     ? raw.path.map(normalizePoint)
@@ -134,12 +149,13 @@ export async function getNearbyToilets(params: {
   lon: number;
   radius: number;
 }): Promise<Toilet[]> {
-  const res = await getJson<ApiResponse<Toilet[]>>('/api/v1/pois/nearby', {
+  const res = await getJson<ApiResponse<any[]>>('/api/v1/pois/nearby', {
     lat: params.lat,
     lon: params.lon,
     radius: params.radius,
   });
-  return unwrap(res);
+  const rows = unwrap(res);
+  return Array.isArray(rows) ? rows.map(normalizeToilet) : [];
 }
 
 export async function getToiletsAlongRoute(params: {

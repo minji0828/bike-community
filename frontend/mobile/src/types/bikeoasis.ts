@@ -7,8 +7,8 @@ export type ApiResponse<T> = {
 export type Toilet = {
   name: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lon: number;
   openingHours: string;
 };
 

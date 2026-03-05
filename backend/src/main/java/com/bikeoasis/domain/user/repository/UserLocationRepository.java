@@ -21,13 +21,7 @@ public interface UserLocationRepository extends JpaRepository<UserLocation, Long
     /**
      * 사용자의 가장 최근 위치 조회
      */
-    @Query(value = """
-        SELECT ul FROM UserLocation ul
-        WHERE ul.user.id = :userId
-        ORDER BY ul.createdAt DESC
-        LIMIT 1
-        """)
-    Optional<UserLocation> findLatestLocationByUserId(@Param("userId") Long userId);
+    Optional<UserLocation> findTopByUserIdOrderByCreatedAtDesc(Long userId);
 
     /**
      * 사용자의 위치 이력 조회 (페이지네이션)

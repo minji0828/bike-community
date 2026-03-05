@@ -6,6 +6,7 @@ import com.bikeoasis.domain.user.entity.User;
 import com.bikeoasis.domain.user.entity.UserLocation;
 import com.bikeoasis.domain.user.repository.UserLocationRepository;
 import com.bikeoasis.domain.user.repository.UserRepository;
+import com.bikeoasis.global.error.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
@@ -38,8 +39,8 @@ public class LocationService {
     public LocationResponse getCurrentLocation(Long userId) {
         log.info("사용자 {} 현재 위치 조회", userId);
 
-        UserLocation location = userLocationRepository.findLatestLocationByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("위치 정보가 없습니다. userId: " + userId));
+        UserLocation location = userLocationRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new BusinessException(404, "위치 정보가 없습니다."));
 
         return LocationResponse.from(location);
     }
@@ -49,16 +50,20 @@ public class LocationService {
      */
     @Transactional
     public LocationResponse updateLocation(Long userId, LocationUpdateRequest request) {
+        if (request == null) {
+            throw new BusinessException(400, "요청 본문이 필요합니다.");
+        }
+
         log.info("사용자 {} 위치 업데이트: lat={}, lon={}", userId, request.getLatitude(), request.getLongitude());
 
         // 데이터 유효성 검사
         if (!request.isValid()) {
-            throw new IllegalArgumentException("유효하지 않은 위경도입니다");
+            throw new BusinessException(400, "유효하지 않은 위경도입니다.");
         }
 
         // 사용자 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. userId: " + userId));
+                .orElseThrow(() -> new BusinessException(404, "사용자를 찾을 수 없습니다."));
 
         // 기존 현재 위치를 과거로 표시
         userLocationRepository.findByUserIdAndIsCurrentTrue(userId)
@@ -108,7 +113,7 @@ public class LocationService {
 
         // 사용자 존재 확인
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. userId: " + userId));
+                .orElseThrow(() -> new BusinessException(404, "사용자를 찾을 수 없습니다."));
 
         List<UserLocation> locations = userLocationRepository.findLocationsByUserIdAndPeriod(userId, startTime, endTime);
         return locations.stream()
@@ -124,7 +129,7 @@ public class LocationService {
 
         // 사용자 존재 확인
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. userId: " + userId));
+                .orElseThrow(() -> new BusinessException(404, "사용자를 찾을 수 없습니다."));
 
         Pageable pageable = PageRequest.of(0, limit);
         List<UserLocation> locations = userLocationRepository.findLastNLocationsByUserId(userId, pageable);
@@ -158,7 +163,7 @@ public class LocationService {
 
         // 사용자 존재 확인
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다. userId: " + userId));
+                .orElseThrow(() -> new BusinessException(404, "사용자를 찾을 수 없습니다."));
 
         List<UserLocation> locations = userLocationRepository.findLastNLocationsByUserId(
                 userId, PageRequest.of(0, limit)
