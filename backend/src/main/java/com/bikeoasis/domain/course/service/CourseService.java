@@ -17,6 +17,7 @@ import com.bikeoasis.domain.course.repository.CourseRepository;
 import com.bikeoasis.domain.course.repository.CourseTagRepository;
 import com.bikeoasis.domain.course.repository.CourseWarningRepository;
 import com.bikeoasis.domain.course.repository.TagRepository;
+import com.bikeoasis.domain.course.service.gpx.CourseGpxStorage;
 import com.bikeoasis.domain.riding.entity.Riding;
 import com.bikeoasis.domain.riding.repository.RidingRepository;
 import com.bikeoasis.global.error.BusinessException;
@@ -58,6 +59,7 @@ public class CourseService {
     private final CourseWarningRepository courseWarningRepository;
     private final GeometryFactory geometryFactory;
     private final RidingRepository ridingRepository;
+    private final CourseGpxStorage courseGpxStorage;
 
     @Transactional
     public Long createCourse(CourseCreateRequest request) {
@@ -80,7 +82,6 @@ public class CourseService {
                 .sourceType(sourceType)
                 .verifiedStatus(sourceType == CourseSourceType.CURATED ? CourseVerifiedStatus.CURATED : CourseVerifiedStatus.UNVERIFIED)
                 .path(lineString)
-                .gpxData(buildGpxFromCoordinates(request.getTitle(), lineString.getCoordinates()))
                 .distanceKm(distanceKm)
                 .estimatedDurationMin(estimatedDurationMin)
                 .loop(loop)
@@ -91,6 +92,8 @@ public class CourseService {
                 .build();
 
         Course saved = courseRepository.save(course);
+        String gpxXml = buildGpxFromCoordinates(request.getTitle(), lineString.getCoordinates());
+        courseGpxStorage.store(saved, gpxXml);
         saveTags(saved, request.getTags());
         saveWarnings(saved, request.getWarnings());
         return saved.getId();
@@ -127,7 +130,6 @@ public class CourseService {
                 .sourceType(sourceType)
                 .verifiedStatus(sourceType == CourseSourceType.CURATED ? CourseVerifiedStatus.CURATED : CourseVerifiedStatus.UNVERIFIED)
                 .path(lineString)
-                .gpxData(request.getGpxXml())
                 .distanceKm(distanceKm)
                 .estimatedDurationMin(estimatedDurationMin)
                 .loop(loop)
@@ -136,7 +138,9 @@ public class CourseService {
                 .bboxMaxLon(bbox.maxLon)
                 .bboxMaxLat(bbox.maxLat)
                 .build();
-        return courseRepository.save(course).getId();
+        Course saved = courseRepository.save(course);
+        courseGpxStorage.store(saved, request.getGpxXml());
+        return saved.getId();
     }
 
     @Transactional
@@ -179,7 +183,6 @@ public class CourseService {
                 .sourceType(sourceType)
                 .verifiedStatus(sourceType == CourseSourceType.CURATED ? CourseVerifiedStatus.CURATED : CourseVerifiedStatus.UNVERIFIED)
                 .path(lineString)
-                .gpxData(buildGpxFromCoordinates(request.getTitle(), coordinates))
                 .distanceKm(distanceKm)
                 .estimatedDurationMin(estimatedDurationMin)
                 .loop(loop)
@@ -190,6 +193,8 @@ public class CourseService {
                 .build();
 
         Course saved = courseRepository.save(course);
+        String gpxXml = buildGpxFromCoordinates(request.getTitle(), coordinates);
+        courseGpxStorage.store(saved, gpxXml);
         saveTags(saved, request.getTags());
         saveWarnings(saved, request.getWarnings());
         return saved.getId();
@@ -290,7 +295,8 @@ public class CourseService {
     public String getCourseGpx(Long courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(404, "코스를 찾을 수 없습니다."));
-        return course.getGpxData() != null ? course.getGpxData() : buildGpxFromCoordinates(course.getTitle(), course.getPath().getCoordinates());
+        String stored = courseGpxStorage.load(course);
+        return stored != null ? stored : buildGpxFromCoordinates(course.getTitle(), course.getPath().getCoordinates());
     }
 
     public String getPublicCourseGpx(String shareId) {
@@ -299,7 +305,8 @@ public class CourseService {
                         List.of(CourseVisibility.PUBLIC, CourseVisibility.UNLISTED)
                 )
                 .orElseThrow(() -> new BusinessException(404, "공유 코스를 찾을 수 없습니다."));
-        return course.getGpxData() != null ? course.getGpxData() : buildGpxFromCoordinates(course.getTitle(), course.getPath().getCoordinates());
+        String stored = courseGpxStorage.load(course);
+        return stored != null ? stored : buildGpxFromCoordinates(course.getTitle(), course.getPath().getCoordinates());
     }
 
     @Transactional
@@ -329,7 +336,6 @@ public class CourseService {
                 .sourceType(CourseSourceType.CURATED)
                 .verifiedStatus(CourseVerifiedStatus.CURATED)
                 .path(lineString)
-                .gpxData(gpxXml)
                 .distanceKm(distanceKm)
                 .estimatedDurationMin(estimatedDurationMin)
                 .loop(loop)
@@ -340,7 +346,8 @@ public class CourseService {
                 .featuredRank(featuredRank)
                 .build();
 
-        courseRepository.save(seed);
+        Course saved = courseRepository.save(seed);
+        courseGpxStorage.store(saved, gpxXml);
     }
 
     private void validateCreateRequest(CourseCreateRequest request) {

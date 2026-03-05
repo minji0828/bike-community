@@ -15,6 +15,13 @@ course:
   seed:
     gpx:
       onstartup: false
+  gpx:
+    storage:
+      mode: ${COURSE_GPX_STORAGE_MODE:s3}
+    s3:
+      bucket: ${COURSE_GPX_S3_BUCKET:}
+      prefix: ${COURSE_GPX_S3_PREFIX:courses/gpx}
+      region: ${COURSE_GPX_S3_REGION:${AWS_REGION:}}
 
 logging:
   level:

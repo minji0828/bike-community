@@ -30,6 +30,13 @@ course:
       path: 설계/자료/동부5고개.gpx
       title: 동부5고개 (벗서명다유)
       featured-rank: 1
+  gpx:
+    storage:
+      mode: ${COURSE_GPX_STORAGE_MODE:db}
+    s3:
+      bucket: ${COURSE_GPX_S3_BUCKET:}
+      prefix: ${COURSE_GPX_S3_PREFIX:courses/gpx}
+      region: ${COURSE_GPX_S3_REGION:}
 
 app:
   jwt:
@@ -82,3 +89,13 @@ logging:
     com.bikeoasis: INFO
     com.bikeoasis.domain.user: DEBUG
     # org.hibernate.SQL: DEBUG  # SQL 로깅 (필요시 활성화)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

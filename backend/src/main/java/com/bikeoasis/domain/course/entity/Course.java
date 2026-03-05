@@ -52,6 +52,9 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String gpxData;
 
+    @Column(length = 512)
+    private String gpxObjectKey;
+
     @Column(nullable = false)
     private Double distanceKm;
 

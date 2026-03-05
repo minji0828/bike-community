@@ -319,6 +319,12 @@ Response:
 - Content-Type: `application/gpx+xml`
 - Body: GPX XML 원문
 
+서버 저장 정책(내부):
+
+- 로컬/개발 기본: DB(`gpx_data`) 저장
+- 운영 기본: S3 본문 저장 + DB(`gpx_object_key`) 참조
+- API 계약(Response shape)은 동일하게 유지한다.
+
 ## 5. Meetup API(MVP3 착수)
 
 - 상세 설계: `설계/22_MVP3_모임_채팅_설계.md`
