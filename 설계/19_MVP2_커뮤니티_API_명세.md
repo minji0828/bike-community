@@ -7,8 +7,8 @@
 
 목적:
 
-- MVP2 커뮤니티(모임/내 활동)의 API 계약을 고정한다.
-- 로그인 없이 `deviceUuid` 기반으로 소유권/제한을 최소한으로 적용한다.
+- MVP2 커뮤니티(댓글)의 API 계약을 고정한다.
+- 카카오 로그인 기반(userId)으로 작성/삭제/신고 권한을 최소한으로 적용한다.
 
 관련 문서:
 
@@ -23,51 +23,39 @@
 - Base URL: `/api/v1`
 - Response: `ApiResponse{ code(int), message, data }`
 
-### 0.1 헤더(비로그인 식별)
+### 0.1 헤더(인증)
 
 write 요청 필수:
 
-- `X-Device-UUID: <uuid>`
+- `Authorization: Bearer <access_token>`
 
-선택:
+로그인 설계:
 
-- `Idempotency-Key: <uuid>` (모임 참여/join 같은 재시도 민감 요청에서 권장)
+- `설계/21_인증_카카오_OIDC.md`
 
 ---
 
-## 1. Meetup API (MVP2 Must)
+## 1. Course Comment API (MVP2 Must)
 
-### 1.1 코스 모임 생성
+### 1.1 댓글 작성
 
-- POST `/api/v1/courses/{courseId}/meetups`
+- POST `/api/v1/courses/{courseId}/comments`
 
 Request
 
 ```json
-{
-  "title": "토요일 오전 한강",
-  "startAt": "2026-03-07T09:00:00+09:00",
-  "maxParticipants": 8,
-  "meetingPoint": { "lat": 37.52, "lon": 126.94 }
-}
+{ "body": "화장실 간격 괜찮고 초보도 무난했어요" }
 ```
 
 Response
 
 ```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "meetupId": 101,
-    "joinCode": "a1b2c3d4e5f6"
-  }
-}
+{ "code": 200, "message": "success", "data": { "commentId": 501 } }
 ```
 
-### 1.2 코스 모임 리스트 조회
+### 1.2 댓글 조회
 
-- GET `/api/v1/courses/{courseId}/meetups?status=open`
+- GET `/api/v1/courses/{courseId}/comments?cursor=&limit=`
 
 Response data (예시)
 
@@ -77,74 +65,84 @@ Response data (예시)
   "message": "success",
   "data": [
     {
-      "meetupId": 101,
-      "title": "토요일 오전 한강",
-      "startAt": "2026-03-07T09:00:00+09:00",
-      "status": "open",
-      "maxParticipants": 8,
-      "participantCount": 3
+      "id": 501,
+      "author": { "displayName": "익명" },
+      "body": "화장실 간격 괜찮고 초보도 무난했어요",
+      "createdAt": "2026-03-04T10:00:00+09:00",
+      "isMine": false
     }
   ]
 }
 ```
 
-### 1.3 모임 상세 조회
+익명 표시 정책:
 
-- GET `/api/v1/meetups/{meetupId}`
+- 댓글 작성자는 화면/UI에서 항상 `익명`으로 표시한다.
+- API는 작성자 userId/email/카카오 프로필 같은 식별 정보를 노출하지 않는다.
+- 클라이언트에서 "삭제" 버튼 노출을 위해 `isMine`만 제공한다.
 
-### 1.4 모임 참여(joinCode)
+### 1.3 댓글 삭제
 
-- POST `/api/v1/meetups/join`
+- DELETE `/api/v1/comments/{commentId}`
+
+정책:
+
+- 작성자만 삭제 가능
+- 삭제는 soft delete(status=deleted) 권장
+
+### 1.4 댓글 신고(선택)
+
+- POST `/api/v1/comments/{commentId}/reports`
 
 Request
 
 ```json
-{ "joinCode": "a1b2c3d4e5f6", "nickname": "익명라이더" }
+{ "reason": "spam", "note": "광고 링크" }
 ```
 
 Response
 
 ```json
-{ "code": 200, "message": "success", "data": { "meetupId": 101, "status": "joined" } }
+{ "code": 200, "message": "success", "data": { "reportId": 9001 } }
 ```
 
-오류(예시)
+### 1.5 (운영) 댓글 숨김/숨김 해제
 
-- 409: 정원 마감
-- 404: joinCode 없음
+신고된 댓글을 운영이 숨김 처리할 수 있어야 한다.
 
-### 1.5 모임 탈퇴
+- PATCH `/api/v1/admin/comments/{commentId}/hide`
+- PATCH `/api/v1/admin/comments/{commentId}/unhide`
 
-- POST `/api/v1/meetups/{meetupId}/leave`
+Headers
+
+- `X-Admin-Key: <ADMIN_API_KEY>`
+
+Response (예시)
+
+```json
+{ "code": 200, "message": "success", "data": "hidden" }
+```
+
+메모:
+
+- `ADMIN_API_KEY`가 설정되지 않으면 운영 API는 비활성(404)로 간주한다.
 
 ---
 
-## 2. My API (MVP2 Must)
+## 2. Auth API (MVP2 Must)
 
-### 2.1 내 코스 목록
-
-- GET `/api/v1/me/courses`
-
-### 2.2 내 라이딩 목록
-
-- GET `/api/v1/me/ridings`
-
-### 2.3 내가 만든/참여한 모임(선택)
-
-- GET `/api/v1/me/meetups`
+상세는 `설계/21_인증_카카오_OIDC.md`에서 고정한다.
 
 ---
 
 ## 3. Rate Limit(초안)
 
-- 모임 생성: deviceUuid 기준 5/day
-- 모임 참여: deviceUuid 기준 30/day
-- 모임 탈퇴: deviceUuid 기준 30/day
+- 댓글 작성: userId 기준 30/day
+- 댓글 신고: userId 기준 50/day
 
 ---
 
-## 4. 멱등성 정책(초안)
+## 4. 멱등성 메모(초안)
 
-- 참여(join)는 멱등해야 한다.
-  - 같은 deviceUuid가 같은 meetup에 이미 참여 중이면 200으로 "이미 참여"를 반환한다.
-- `Idempotency-Key`를 쓰면 네트워크 재시도/중복 탭에 더 안전하다.
+- 댓글 작성은 기본적으로 멱등을 강제하지 않는다.
+- 스팸/도배는 rate limit과 신고/숨김으로 대응한다.
