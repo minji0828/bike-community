@@ -42,6 +42,7 @@ type MapProps = {
   onRegionChangeComplete?: (region: Region) => void;
   showsUserLocation?: boolean;
   onTouchStart?: () => void;
+  mapType?: string;
   children?: React.ReactNode;
 };
 
@@ -502,7 +503,23 @@ if (Platform.OS === 'web') {
   PolylineImpl = WebPolyline;
 } else {
   const Maps = require('react-native-maps');
-  MapViewImpl = Maps.default;
+
+  const RawMapView = Maps.default ?? Maps;
+  const UrlTile = Maps.UrlTile;
+
+  MapViewImpl = forwardRef<any, MapProps>((props, ref) => {
+    return (
+      <RawMapView ref={ref} {...props} mapType="none">
+        <UrlTile
+          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maximumZ={19}
+          tileSize={256}
+        />
+        {props.children}
+      </RawMapView>
+    );
+  });
+
   MarkerImpl = Maps.Marker;
   PolylineImpl = Maps.Polyline;
 }
