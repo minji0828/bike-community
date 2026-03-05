@@ -18,7 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,15 +72,33 @@ public class CourseMeetupService {
         CourseMeetupStatus parsedStatus = parseStatus(status);
         List<CourseMeetup> meetups = courseMeetupRepository.findByCourseIdAndOptionalStatus(courseId, parsedStatus);
 
+        if (meetups.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> meetupIds = meetups.stream().map(CourseMeetup::getId).toList();
+        Map<Long, Long> countMap = toCountMap(courseMeetupParticipantRepository.countByMeetupIds(meetupIds));
+
+        Set<Long> joinedIds = Set.of();
+        if (currentUserId != null) {
+            joinedIds = courseMeetupParticipantRepository.findMeetupIdsByUserIdInMeetups(currentUserId, meetupIds)
+                    .stream()
+                    .collect(Collectors.toSet());
+        }
+
+        Set<Long> finalJoinedIds = joinedIds;
         return meetups.stream()
-                .map(meetup -> toResponse(meetup, currentUserId))
+                .map(meetup -> toResponse(meetup, currentUserId, countMap.getOrDefault(meetup.getId(), 0L), finalJoinedIds.contains(meetup.getId())))
                 .toList();
     }
 
     public CourseMeetupResponse getMeetup(Long meetupId, Long currentUserId) {
         CourseMeetup meetup = courseMeetupRepository.findById(meetupId)
                 .orElseThrow(() -> new BusinessException(404, "모임을 찾을 수 없습니다."));
-        return toResponse(meetup, currentUserId);
+        long participantCount = courseMeetupParticipantRepository.countByMeetupId(meetup.getId());
+        boolean joined = currentUserId != null
+                && courseMeetupParticipantRepository.existsByMeetupIdAndUserId(meetup.getId(), currentUserId);
+        return toResponse(meetup, currentUserId, participantCount, joined);
     }
 
     @Transactional
@@ -126,10 +148,10 @@ public class CourseMeetupService {
                 .ifPresent(courseMeetupParticipantRepository::delete);
     }
 
-    private CourseMeetupResponse toResponse(CourseMeetup meetup, Long currentUserId) {
-        long participantCount = courseMeetupParticipantRepository.countByMeetupId(meetup.getId());
-        boolean joined = currentUserId != null
-                && courseMeetupParticipantRepository.existsByMeetupIdAndUserId(meetup.getId(), currentUserId);
+    private CourseMeetupResponse toResponse(CourseMeetup meetup,
+                                           Long currentUserId,
+                                           long participantCount,
+                                           boolean joined) {
         boolean host = currentUserId != null && meetup.getHostUser().getId().equals(currentUserId);
 
         return new CourseMeetupResponse(
@@ -145,6 +167,24 @@ public class CourseMeetupService {
                 joined,
                 host
         );
+    }
+
+    private Map<Long, Long> toCountMap(List<Object[]> rows) {
+        Map<Long, Long> map = new HashMap<>();
+        if (rows == null) {
+            return map;
+        }
+        for (Object[] row : rows) {
+            if (row == null || row.length < 2) {
+                continue;
+            }
+            Long meetupId = row[0] instanceof Long v ? v : null;
+            Long count = row[1] instanceof Long v ? v : null;
+            if (meetupId != null && count != null) {
+                map.put(meetupId, count);
+            }
+        }
+        return map;
     }
 
     private CourseMeetupStatus parseStatus(String raw) {
