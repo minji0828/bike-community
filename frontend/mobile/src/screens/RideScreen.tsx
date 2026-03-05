@@ -10,7 +10,12 @@ import {
 } from 'react-native';
 import MapView, { Marker, Polyline, Region } from '../components/MapWrapper';
 
-import { createCourseFromRiding, createRiding, getToiletsAlongRoute } from '../api/bikeoasis';
+import {
+  createCourseFromRiding,
+  createRiding,
+  getToiletsAlongRoute,
+  updateUserLocation,
+} from '../api/bikeoasis';
 import { AppButton, AppCard, AppChip, ScreenContainer } from '../components/ui';
 import { useSettingsStore } from '../state/settingsStore';
 import { colors, spacing, typography } from '../theme/tokens';
@@ -38,6 +43,7 @@ export default function RideScreen() {
   const hasHydrated = useSettingsStore((s) => s.hasHydrated);
   const deviceUuid = useSettingsStore((s) => s.deviceUuid);
   const userId = useSettingsStore((s) => s.userId);
+  const accessToken = useSettingsStore((s) => s.accessToken);
   const routeRadiusMeters = useSettingsStore((s) => s.routeRadiusMeters);
 
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
@@ -50,6 +56,10 @@ export default function RideScreen() {
   const [busy, setBusy] = useState(false);
   const [rideId, setRideId] = useState<number | null>(null);
   const [courseId, setCourseId] = useState<number | null>(null);
+  const [locationSyncStatus, setLocationSyncStatus] = useState<'off' | 'syncing' | 'ok' | 'error'>('off');
+
+  const lastLocationSyncAtRef = useRef(0);
+  const locationSyncInFlightRef = useRef(false);
 
   const canStart = useMemo(() => {
     if (!hasHydrated) return false;
@@ -78,6 +88,49 @@ export default function RideScreen() {
     setPermissionGranted(granted);
     return granted;
   }, []);
+
+  const syncLocationBestEffort = useCallback(
+    (coords: Location.LocationObjectCoords) => {
+      if (userId === null || !accessToken) {
+        setLocationSyncStatus('off');
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastLocationSyncAtRef.current < 10000) {
+        return;
+      }
+      if (locationSyncInFlightRef.current) {
+        return;
+      }
+
+      locationSyncInFlightRef.current = true;
+      setLocationSyncStatus('syncing');
+
+      void updateUserLocation(userId, {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: coords.accuracy ?? undefined,
+        speed: coords.speed ?? undefined,
+        altitude: coords.altitude ?? undefined,
+        metadata: {
+          source: 'ride_screen',
+          heading: coords.heading ?? null,
+        },
+      })
+        .then(() => {
+          lastLocationSyncAtRef.current = now;
+          setLocationSyncStatus('ok');
+        })
+        .catch(() => {
+          setLocationSyncStatus('error');
+        })
+        .finally(() => {
+          locationSyncInFlightRef.current = false;
+        });
+    },
+    [accessToken, userId]
+  );
 
   const startRide = useCallback(async () => {
     if (!canStart) return;
@@ -122,6 +175,9 @@ export default function RideScreen() {
     setPath([]);
     setDistanceMeters(0);
     setElapsedSec(0);
+    setLocationSyncStatus(userId === null || !accessToken ? 'off' : 'syncing');
+    lastLocationSyncAtRef.current = 0;
+    locationSyncInFlightRef.current = false;
     const startedAt = nowMs();
     setStartAtMs(startedAt);
     setStatus('running');
@@ -150,6 +206,7 @@ export default function RideScreen() {
         distanceInterval: 5,
       },
       (loc) => {
+        syncLocationBestEffort(loc.coords);
         const next: PointDto = {
           lat: loc.coords.latitude,
           lon: loc.coords.longitude,
@@ -166,7 +223,7 @@ export default function RideScreen() {
         });
       }
     );
-  }, [canStart, permissionGranted, requestPermission]);
+  }, [accessToken, canStart, permissionGranted, requestPermission, syncLocationBestEffort, userId]);
 
   const stopRide = useCallback(async () => {
     if (status !== 'running') return;
@@ -186,6 +243,9 @@ export default function RideScreen() {
     setDistanceMeters(0);
     setElapsedSec(0);
     setStartAtMs(null);
+    setLocationSyncStatus('off');
+    lastLocationSyncAtRef.current = 0;
+    locationSyncInFlightRef.current = false;
   }, []);
 
   const handleCreateCourse = useCallback(async () => {
@@ -360,6 +420,16 @@ export default function RideScreen() {
           {toilets.length > 0 ? (
             <Text style={styles.meta}>경로 주변 화장실: {toilets.length}개</Text>
           ) : null}
+          <Text style={styles.meta}>
+            위치 동기화:{' '}
+            {locationSyncStatus === 'off'
+              ? '비활성(로그인+userId 필요)'
+              : locationSyncStatus === 'syncing'
+                ? '동기화 중'
+                : locationSyncStatus === 'ok'
+                  ? '정상'
+                  : '오류'}
+          </Text>
           {!deviceUuid && hasHydrated ? (
             <Text style={styles.warnText}>
               기기 UUID가 없습니다. 설정 화면을 확인하거나 앱을 재시작해 주세요.

@@ -27,6 +27,28 @@ export type RidingCreateRequest = {
   path: PointDto[];
 };
 
+export type LocationUpdateRequest = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  speed?: number;
+  altitude?: number;
+  metadata?: Record<string, unknown>;
+};
+
+export type LocationRecord = {
+  locationId: number;
+  userId: number;
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+  speed?: number | null;
+  altitude?: number | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+  isCurrent: boolean;
+};
+
 export type CourseWarning = {
   type: string;
   severity: number;

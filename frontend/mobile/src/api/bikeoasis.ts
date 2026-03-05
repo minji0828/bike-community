@@ -7,6 +7,8 @@ import {
   CourseCreateRequest,
   CourseFromRidingCreateRequest,
   CourseDetail,
+  LocationRecord,
+  LocationUpdateRequest,
   CourseSummary,
   KakaoLoginRequest,
   PointDto,
@@ -145,6 +147,26 @@ function normalizeMeetup(raw: any): CourseMeetup {
   };
 }
 
+function normalizeLocationRecord(raw: any): LocationRecord {
+  return {
+    locationId: asNumber(raw?.location_id ?? raw?.locationId),
+    userId: asNumber(raw?.user_id ?? raw?.userId),
+    latitude: asNumber(raw?.latitude),
+    longitude: asNumber(raw?.longitude),
+    accuracy:
+      raw?.accuracy === undefined || raw?.accuracy === null ? null : asNumber(raw?.accuracy),
+    speed: raw?.speed === undefined || raw?.speed === null ? null : asNumber(raw?.speed),
+    altitude:
+      raw?.altitude === undefined || raw?.altitude === null ? null : asNumber(raw?.altitude),
+    metadata:
+      raw?.metadata && typeof raw?.metadata === 'object'
+        ? (raw.metadata as Record<string, unknown>)
+        : null,
+    createdAt: String(raw?.created_at ?? raw?.createdAt ?? ''),
+    isCurrent: Boolean(raw?.is_current ?? raw?.isCurrent),
+  };
+}
+
 function unwrap<T>(res: ApiResponse<T> | T): T {
   if (!res) throw new Error('Empty response');
   if (typeof res === 'object' && res !== null && 'code' in (res as any) && 'data' in (res as any)) {
@@ -216,6 +238,28 @@ export async function createRiding(request: RidingCreateRequest): Promise<number
     throw new Error(`Unexpected riding id response: ${text}`);
   }
   return fallbackId;
+}
+
+export async function updateUserLocation(
+  userId: number,
+  request: LocationUpdateRequest
+): Promise<LocationRecord> {
+  const res = await postJson<ApiResponse<any>>(
+    `/api/v1/locations/${userId}`,
+    request,
+    undefined,
+    requiredAuthHeaders()
+  );
+  return normalizeLocationRecord(unwrap(res));
+}
+
+export async function getCurrentUserLocation(userId: number): Promise<LocationRecord> {
+  const res = await getJson<ApiResponse<any>>(
+    `/api/v1/locations/${userId}/current`,
+    undefined,
+    requiredAuthHeaders()
+  );
+  return normalizeLocationRecord(unwrap(res));
 }
 
 export async function getFeaturedCourses(region?: string): Promise<CourseSummary[]> {

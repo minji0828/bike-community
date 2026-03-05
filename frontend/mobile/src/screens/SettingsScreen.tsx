@@ -15,6 +15,25 @@ import { useSettingsStore } from '../state/settingsStore';
 import { getJson } from '../api/client';
 import { colors, spacing, typography } from '../theme/tokens';
 
+function parseJwtSubjectAsNumber(token: string): number | null {
+  try {
+    const chunks = token.split('.');
+    if (chunks.length < 2) return null;
+    const base64 = chunks[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padLen = (4 - (base64.length % 4)) % 4;
+    const normalized = base64 + '='.repeat(padLen);
+    const decoded = globalThis.atob ? globalThis.atob(normalized) : '';
+    if (!decoded) return null;
+    const payload = JSON.parse(decoded) as { sub?: string };
+    const sub = payload?.sub;
+    if (!sub) return null;
+    const n = Number(sub);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function SettingsScreen() {
   const apiBaseUrl = useSettingsStore((s) => s.apiBaseUrl);
   const setApiBaseUrl = useSettingsStore((s) => s.setApiBaseUrl);
@@ -80,6 +99,10 @@ export default function SettingsScreen() {
         nonce: kakaoNonce.trim() || undefined,
       });
       setAccessToken(token.accessToken);
+      const parsedUserId = parseJwtSubjectAsNumber(token.accessToken);
+      if (parsedUserId !== null) {
+        setUserId(parsedUserId);
+      }
       Alert.alert('로그인 성공', `토큰이 저장되었습니다. (만료 ${token.expiresInSec}초)`);
     } catch (e: any) {
       Alert.alert('로그인 실패', String(e?.message ?? e));
