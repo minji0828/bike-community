@@ -1,0 +1,4 @@
+package com.bikeoasis.domain.course.dto;
+
+public record CourseCommentCreateResponse(Long commentId) {
+}
