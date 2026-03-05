@@ -382,8 +382,12 @@ Broadcast payload (topic)
 
 > MVP는 UI 없이도 관리 가능한 수준의 API만 있어도 된다.
 
-- POST `/admin/poi/sync`
-- CRUD `/admin/courses`
-- POST `/admin/courses/{id}/recompute-metadata`
-- CRUD `/admin/tags`
-- CRUD `/admin/courses/{id}/warnings`
+- Headers: `X-Admin-Key: <ADMIN_API_KEY>`
+- GET `/api/v1/admin/tags`
+- POST `/api/v1/admin/tags`
+- PATCH `/api/v1/admin/tags/{tagId}`
+- DELETE `/api/v1/admin/tags/{tagId}` (hard delete 대신 비활성화)
+- GET `/api/v1/admin/courses/{courseId}/warnings`
+- POST `/api/v1/admin/courses/{courseId}/warnings`
+- DELETE `/api/v1/admin/warnings/{warningId}`
+- POST `/api/v1/admin/courses/{courseId}/metadata/recalculate`
