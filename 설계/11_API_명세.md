@@ -1,8 +1,8 @@
 # API 명세(초안)
 
 - 문서 ID: API-SPEC
-- 버전: v0.2
-- 작성일: 2026-02-25
+- 버전: v0.3
+- 작성일: 2026-03-05
 - 상태: 초안
 
 목적:
@@ -339,6 +339,44 @@ Response:
 동시성:
 
 - join은 정원(capacity) 조건을 row-level lock으로 보호한다.
+
+### 5.1 Meetup 임시 채팅 API(WebSocket/STOMP)
+
+- 상세 설계: `설계/22_MVP3_모임_채팅_설계.md`
+- 연결 엔드포인트:
+  - WebSocket: `ws://<host>/ws-stomp`
+  - SockJS fallback: `http://<host>/ws-stomp`
+- 앱 destination prefix: `/app`
+- 구독 topic:
+  - 실시간 메시지: `/topic/meetups/{meetupId}/chat`
+  - 히스토리 응답(user queue): `/user/queue/meetups/{meetupId}/chat.history`
+- 발행/요청:
+  - 메시지 발행: `/app/meetups/{meetupId}/chat.send`
+  - 히스토리 요청: `/app/meetups/{meetupId}/chat.history`
+
+Request (chat.send)
+
+```json
+{ "body": "출발 5분 전이에요!" }
+```
+
+Broadcast payload (topic)
+
+```json
+{
+  "messageId": "f5a1f0f9a7b14f29a3326ce7c8d6a356",
+  "meetupId": 1001,
+  "authorDisplayName": "익명",
+  "body": "출발 5분 전이에요!",
+  "sentAt": "2026-03-05T15:04:00+09:00"
+}
+```
+
+채팅 정책:
+
+- 모임 참가자만 publish/subscribe 가능
+- 메시지 길이 최대 200자
+- DB 비저장(in-memory 최근 N개 히스토리)
 
 ## 6. Admin/Backoffice API(초안)
 
