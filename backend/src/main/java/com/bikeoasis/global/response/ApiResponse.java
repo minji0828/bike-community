@@ -32,8 +32,12 @@ public class ApiResponse<T> {
      * 오류 응답 빌더
      */
     public static <T> ApiResponse<T> error(String message) {
+        return error(500, message);
+    }
+
+    public static <T> ApiResponse<T> error(int code, String message) {
         return ApiResponse.<T>builder()
-                .code(500)
+                .code(code)
                 .message(message)
                 .data(null)
                 .build();

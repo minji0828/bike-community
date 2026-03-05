@@ -1,7 +1,9 @@
 package com.bikeoasis.domain.riding.controller;
 
 import com.bikeoasis.domain.riding.dto.RidingCreateRequest;
+import com.bikeoasis.domain.riding.dto.RidingCreateResponse;
 import com.bikeoasis.domain.riding.service.RidingService;
+import com.bikeoasis.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +21,8 @@ public class RidingController {
     private final RidingService ridingService;
 
     @PostMapping
-    public ResponseEntity<Long> createRiding(@RequestBody RidingCreateRequest request) {
+    public ResponseEntity<ApiResponse<RidingCreateResponse>> createRiding(@RequestBody RidingCreateRequest request) {
         Long ridingId = ridingService.saveRiding(request);
-        return ResponseEntity.ok(ridingId);
+        return ResponseEntity.ok(ApiResponse.success(new RidingCreateResponse(ridingId)));
     }
 }
