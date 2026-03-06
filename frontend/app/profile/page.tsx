@@ -88,9 +88,8 @@ export default function ProfilePage() {
               <Button
                 className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]"
                 onClick={handleKakaoLogin}
-                disabled={isLoading}
               >
-                카카오로 로그인
+                {isLoading ? '카카오 로그인 준비 중...' : '카카오로 로그인'}
               </Button>
             )}
           </CardContent>

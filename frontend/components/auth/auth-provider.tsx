@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    Promise.resolve().then(() => {
+    try {
       const stored = getStoredAccessToken()
       if (stored && !isTokenExpired(stored)) {
         setToken(stored)
@@ -42,8 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         clearStoredAccessToken()
       }
+    } finally {
       setIsLoading(false)
-    })
+    }
   }, [])
 
   const startKakaoLogin = useCallback(async () => {
