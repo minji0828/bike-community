@@ -48,6 +48,7 @@ type StompClientOptions = {
 export class SimpleStompClient {
   private socket: WebSocket | null = null
   private readonly options: StompClientOptions
+  private isDisconnecting = false
 
   constructor(options: StompClientOptions) {
     this.options = options
@@ -55,6 +56,8 @@ export class SimpleStompClient {
 
   connect() {
     return new Promise<void>((resolve, reject) => {
+      let settled = false
+      this.isDisconnecting = false
       this.socket = new WebSocket(this.options.url)
 
       this.socket.onopen = () => {
@@ -72,6 +75,7 @@ export class SimpleStompClient {
 
         frames.forEach((frame) => {
           if (frame.command === 'CONNECTED') {
+            settled = true
             resolve()
             return
           }
@@ -79,7 +83,10 @@ export class SimpleStompClient {
           if (frame.command === 'ERROR') {
             const message = frame.body || frame.headers.message || '채팅 연결에 실패했습니다.'
             this.options.onError?.(message)
-            reject(new Error(message))
+            if (!settled) {
+              settled = true
+              reject(new Error(message))
+            }
             return
           }
 
@@ -90,17 +97,33 @@ export class SimpleStompClient {
       }
 
       this.socket.onerror = () => {
-        reject(new Error('웹소켓 연결 중 오류가 발생했습니다.'))
+        if (!settled) {
+          settled = true
+          reject(new Error('웹소켓 연결 중 오류가 발생했습니다.'))
+        }
       }
 
       this.socket.onclose = () => {
+        const wasDisconnecting = this.isDisconnecting
+        this.socket = null
+        this.isDisconnecting = false
+
+        if (!settled && !wasDisconnecting) {
+          settled = true
+          reject(new Error('웹소켓 연결이 닫혔습니다.'))
+        }
+
         this.options.onClose?.()
       }
     })
   }
 
   subscribe(destination: string, id: string) {
-    this.socket?.send(
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      return
+    }
+
+    this.socket.send(
       buildFrame('SUBSCRIBE', {
         id,
         destination,
@@ -109,7 +132,11 @@ export class SimpleStompClient {
   }
 
   send(destination: string, body = '', headers: Record<string, string> = {}) {
-    this.socket?.send(
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      return
+    }
+
+    this.socket.send(
       buildFrame(
         'SEND',
         {
@@ -126,9 +153,20 @@ export class SimpleStompClient {
       return
     }
 
-    this.socket.send(buildFrame('DISCONNECT'))
-    this.socket.close()
-    this.socket = null
+    this.isDisconnecting = true
+
+    if (this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(buildFrame('DISCONNECT'))
+    }
+
+    if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {
+      this.socket.close()
+    }
+
+    if (this.socket.readyState === WebSocket.CLOSING || this.socket.readyState === WebSocket.CLOSED) {
+      this.socket = null
+      this.isDisconnecting = false
+    }
   }
 }
 
