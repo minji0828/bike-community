@@ -7,6 +7,7 @@ import com.bikeoasis.domain.user.enums.AuthProvider;
 import com.bikeoasis.domain.user.repository.UserRepository;
 import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.infrastructure.kakao.KakaoAuthClient;
+import com.bikeoasis.infrastructure.kakao.KakaoOidcUserInfoClient;
 import com.bikeoasis.infrastructure.kakao.dto.KakaoTokenResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ class AuthServiceTest {
     private KakaoIdTokenVerifier kakaoIdTokenVerifier;
 
     @Mock
+    private KakaoOidcUserInfoClient kakaoOidcUserInfoClient;
+
+    @Mock
     private AppTokenService appTokenService;
 
     @Mock
@@ -45,7 +49,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(kakaoAuthClient, kakaoIdTokenVerifier, appTokenService, userRepository);
+        authService = new AuthService(kakaoAuthClient, kakaoIdTokenVerifier, kakaoOidcUserInfoClient, appTokenService, userRepository);
         ReflectionTestUtils.setField(authService, "kakaoClientId", "client-id");
         ReflectionTestUtils.setField(authService, "allowedRedirectUris", "http://localhost:3000/auth/kakao/callback");
         ReflectionTestUtils.setField(authService, "accessTokenExpSeconds", 600L);
@@ -140,6 +144,42 @@ class AuthServiceTest {
         );
 
         Assertions.assertThat(response.accessToken()).isEqualTo("app-jwt");
+        Assertions.assertThat(response.expiresInSec()).isEqualTo(600L);
+    }
+
+    @Test
+    void loginWithKakao_fallsBackToUserInfoWhenIdTokenVerificationFails() {
+        KakaoTokenResponse tokenResponse = new KakaoTokenResponse(
+                "kakao-access",
+                "bearer",
+                null,
+                3600L,
+                "openid",
+                "id-token",
+                null
+        );
+        when(kakaoAuthClient.exchangeCodeForToken(eq("code"), eq("verifier"), eq("http://localhost:3000/auth/kakao/callback")))
+                .thenReturn(tokenResponse);
+
+        when(kakaoIdTokenVerifier.verify("id-token"))
+                .thenThrow(new BusinessException(401, "유효하지 않은 Kakao id_token입니다."));
+        when(kakaoOidcUserInfoClient.fetchSub("kakao-access")).thenReturn("kakao-sub");
+
+        when(userRepository.findByProviderAndProviderSub(AuthProvider.KAKAO, "kakao-sub"))
+                .thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(9L);
+            return user;
+        });
+
+        when(appTokenService.issueAccessToken(eq(9L), anyLong())).thenReturn("app-jwt-fallback");
+
+        AuthTokenResponse response = authService.loginWithKakao(
+                new KakaoLoginRequest("code", "verifier", "http://localhost:3000/auth/kakao/callback", "nonce-1")
+        );
+
+        Assertions.assertThat(response.accessToken()).isEqualTo("app-jwt-fallback");
         Assertions.assertThat(response.expiresInSec()).isEqualTo(600L);
     }
 }
