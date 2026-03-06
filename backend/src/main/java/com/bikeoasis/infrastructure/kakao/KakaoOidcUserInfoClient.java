@@ -23,7 +23,7 @@ public class KakaoOidcUserInfoClient {
     @Value("${kakao.oauth.userinfo-uri:https://kapi.kakao.com/v1/oidc/userinfo}")
     private String userInfoUri;
 
-    public String fetchSub(String accessToken) {
+    public KakaoOidcUserInfoResponse fetchUserInfo(String accessToken) {
         if (accessToken == null || accessToken.isBlank()) {
             throw new BusinessException(401, "Kakao access token이 없습니다.");
         }
@@ -43,10 +43,14 @@ public class KakaoOidcUserInfoClient {
                 throw new BusinessException(401, "Kakao 사용자 정보를 확인하지 못했습니다.");
             }
 
-            return response.getBody().sub();
+            return response.getBody();
         } catch (RestClientException e) {
             log.error("Kakao userinfo fetch failed", e);
             throw new BusinessException(401, "Kakao 사용자 정보를 확인하지 못했습니다.");
         }
+    }
+
+    public String fetchSub(String accessToken) {
+        return fetchUserInfo(accessToken).sub();
     }
 }

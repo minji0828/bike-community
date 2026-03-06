@@ -1,6 +1,7 @@
 package com.bikeoasis.domain.auth.service;
 
 import com.bikeoasis.domain.auth.dto.AuthTokenResponse;
+import com.bikeoasis.domain.auth.dto.AuthMeResponse;
 import com.bikeoasis.domain.auth.dto.KakaoLoginRequest;
 import com.bikeoasis.domain.user.entity.User;
 import com.bikeoasis.domain.user.enums.AuthProvider;
@@ -8,6 +9,7 @@ import com.bikeoasis.domain.user.repository.UserRepository;
 import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.infrastructure.kakao.KakaoAuthClient;
 import com.bikeoasis.infrastructure.kakao.KakaoOidcUserInfoClient;
+import com.bikeoasis.infrastructure.kakao.dto.KakaoOidcUserInfoResponse;
 import com.bikeoasis.infrastructure.kakao.dto.KakaoTokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +71,7 @@ public class AuthService {
         }
 
         String kakaoSub;
+        String kakaoNickname = null;
         try {
             Jwt idToken = kakaoIdTokenVerifier.verify(tokenResponse.idToken());
 
@@ -83,16 +86,33 @@ public class AuthService {
             if (kakaoSub == null || kakaoSub.isBlank()) {
                 throw new BusinessException(400, "Kakao sub(subject)가 없습니다.");
             }
+            kakaoNickname = firstNonBlank(
+                    idToken.getClaimAsString("nickname"),
+                    idToken.getClaimAsString("preferred_username"),
+                    idToken.getClaimAsString("name")
+            );
         } catch (BusinessException e) {
             if (!"유효하지 않은 Kakao id_token입니다.".equals(e.getMessage())) {
                 throw e;
             }
 
             log.warn("Falling back to Kakao OIDC userinfo because id_token verification failed.");
-            kakaoSub = kakaoOidcUserInfoClient.fetchSub(tokenResponse.accessToken());
+            KakaoOidcUserInfoResponse userInfo = kakaoOidcUserInfoClient.fetchUserInfo(tokenResponse.accessToken());
+            kakaoSub = userInfo.sub();
+            kakaoNickname = firstNonBlank(userInfo.nickname(), userInfo.preferredUsername(), userInfo.name());
+        }
+
+        if (kakaoNickname == null || kakaoNickname.isBlank()) {
+            try {
+                KakaoOidcUserInfoResponse userInfo = kakaoOidcUserInfoClient.fetchUserInfo(tokenResponse.accessToken());
+                kakaoNickname = firstNonBlank(kakaoNickname, userInfo.nickname(), userInfo.preferredUsername(), userInfo.name());
+            } catch (BusinessException e) {
+                log.warn("Kakao nickname fetch skipped: {}", e.getMessage());
+            }
         }
 
         final String resolvedKakaoSub = kakaoSub;
+        final String resolvedUsername = normalizeUsername(kakaoNickname);
 
         User user = userRepository.findByProviderAndProviderSub(AuthProvider.KAKAO, resolvedKakaoSub)
                 .orElseGet(() -> {
@@ -100,7 +120,7 @@ public class AuthService {
                         return userRepository.save(User.builder()
                                 .provider(AuthProvider.KAKAO)
                                 .providerSub(resolvedKakaoSub)
-                                .username("익명")
+                                .username(resolvedUsername)
                                 .build());
                     } catch (DataIntegrityViolationException e) {
                         return userRepository.findByProviderAndProviderSub(AuthProvider.KAKAO, resolvedKakaoSub)
@@ -108,8 +128,27 @@ public class AuthService {
                     }
                 });
 
-        String accessToken = appTokenService.issueAccessToken(user.getId(), accessTokenExpSeconds);
+        if (shouldUpdateUsername(user.getUsername(), resolvedUsername)) {
+            user.setUsername(resolvedUsername);
+        }
+
+        String accessToken = appTokenService.issueAccessToken(user.getId(), user.getUsername(), accessTokenExpSeconds);
         return new AuthTokenResponse(accessToken, accessTokenExpSeconds);
+    }
+
+    public AuthMeResponse getCurrentUser(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(401, "인증이 필요합니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(404, "사용자를 찾을 수 없습니다."));
+
+        return new AuthMeResponse(
+                user.getId(),
+                normalizeUsername(user.getUsername()),
+                user.getProvider() == null ? null : user.getProvider().name()
+        );
     }
 
     private void validateRedirectUri(String redirectUri) {
@@ -126,5 +165,32 @@ public class AuthService {
         if (!allowed.contains(redirectUri)) {
             throw new BusinessException(400, "허용되지 않은 redirectUri입니다.");
         }
+    }
+
+    private boolean shouldUpdateUsername(String currentUsername, String newUsername) {
+        if (newUsername == null || newUsername.isBlank()) {
+            return false;
+        }
+        return currentUsername == null || currentUsername.isBlank() || "익명".equals(currentUsername) || "카카오 라이더".equals(currentUsername);
+    }
+
+    private String normalizeUsername(String username) {
+        String trimmed = username == null ? "" : username.trim();
+        if (trimmed.isBlank()) {
+            return "카카오 라이더";
+        }
+        return trimmed.length() > 50 ? trimmed.substring(0, 50) : trimmed;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 }

@@ -12,6 +12,8 @@ type KakaoLoginSession = {
 
 export type AuthUser = {
   userId: string
+  username?: string
+  provider?: string
   expiresAt?: number
 }
 
@@ -97,8 +99,12 @@ export function getAuthUserFromToken(token: string | null): AuthUser | null {
     }
 
     const exp = typeof payload.exp === 'number' ? payload.exp : undefined
+    const username = typeof payload.username === 'string' ? payload.username : undefined
+    const provider = typeof payload.provider === 'string' ? payload.provider : undefined
     return {
       userId: sub,
+      username,
+      provider,
       expiresAt: exp,
     }
   } catch {

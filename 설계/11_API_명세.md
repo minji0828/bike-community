@@ -176,6 +176,60 @@ Response (권장)
 - GET `/api/v1/locations/{userId}/distance?limit=`
 - DELETE `/api/v1/locations/{userId}/old-history?daysToKeep=`
 
+## 3.5 Auth API
+
+### 3.5.1 카카오 로그인 교환
+
+- POST `/api/v1/auth/kakao`
+
+Request
+
+```json
+{
+  "code": "...",
+  "codeVerifier": "...",
+  "redirectUri": "http://localhost:3000/auth/kakao/callback",
+  "nonce": "..."
+}
+```
+
+Response
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "accessToken": "...",
+    "expiresInSec": 3600
+  }
+}
+```
+
+### 3.5.2 현재 로그인 사용자 조회
+
+- GET `/api/v1/auth/me`
+
+Header
+
+```http
+Authorization: Bearer <service-access-token>
+```
+
+Response
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "userId": 1,
+    "username": "카카오 닉네임",
+    "provider": "KAKAO"
+  }
+}
+```
+
 ## 4. Course API(신규, MVP 핵심)
 
 ### 4.1 코스 생성(라이딩 기반)

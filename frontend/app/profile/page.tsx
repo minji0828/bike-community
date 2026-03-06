@@ -37,7 +37,12 @@ export default function ProfilePage() {
   const totalDistance = sampleRides.reduce((sum, ride) => sum + ride.distance, 0)
   const totalTime = sampleRides.reduce((sum, ride) => sum + ride.duration, 0)
   const avgSpeed = sampleRides.reduce((sum, ride) => sum + ride.avgSpeed, 0) / sampleRides.length
-  const riderName = useMemo(() => (user ? `라이더 #${user.userId}` : '자전거매니아'), [user])
+  const riderName = useMemo(() => {
+    if (!user) {
+      return '자전거매니아'
+    }
+    return user.username?.trim() || `라이더 #${user.userId}`
+  }, [user])
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
@@ -90,7 +95,10 @@ export default function ProfilePage() {
             {isAuthenticated ? (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  현재 사용자 ID: <span className="font-semibold text-foreground">{user?.userId}</span>
+                  현재 사용자: <span className="font-semibold text-foreground">{user?.username || riderName}</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  사용자 ID: <span className="font-semibold text-foreground">{user?.userId}</span>
                 </p>
                 <Button variant="outline" className="w-full rounded-full" onClick={logout}>
                   로그아웃

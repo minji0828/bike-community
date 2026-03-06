@@ -130,6 +130,35 @@ Response
 }
 ```
 
+### 5.2 현재 로그인 사용자 조회
+
+- GET `/api/v1/auth/me`
+
+Header
+
+```http
+Authorization: Bearer <service-access-token>
+```
+
+Response
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "userId": 1,
+    "username": "카카오 닉네임",
+    "provider": "KAKAO"
+  }
+}
+```
+
+메모:
+
+- 클라이언트는 로그인 직후 이 API로 실제 로그인 상태를 재검증한다.
+- 서비스 JWT에는 최소한 `sub(userId)`를 포함하고, 클라이언트 초기 렌더 편의를 위해 `username` claim을 함께 담을 수 있다.
+
 ---
 
 ## 6. 보안/운영 메모

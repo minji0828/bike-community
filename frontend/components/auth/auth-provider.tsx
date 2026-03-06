@@ -16,6 +16,12 @@ import {
 } from '@/lib/auth'
 import { buildKakaoAuthorizeUrl, generatePkcePair, generateRandomString } from '@/lib/pkce'
 
+type AuthMeResponse = {
+  userId: number
+  username: string
+  provider?: string | null
+}
+
 type AuthContextValue = {
   token: string | null
   user: AuthUser | null
@@ -31,20 +37,50 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<AuthUser | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    try {
+    const syncAuth = async () => {
       const stored = getStoredAccessToken()
-      if (stored && !isTokenExpired(stored)) {
-        setToken(stored)
-        setUser(getAuthUserFromToken(stored))
-      } else {
+      if (!stored || isTokenExpired(stored)) {
         clearStoredAccessToken()
+        setToken(null)
+        setUser(null)
+        setIsLoading(false)
+        return
       }
-    } finally {
-      setIsLoading(false)
+
+      setToken(stored)
+      setStoredAccessToken(stored)
+      setUser(getAuthUserFromToken(stored))
+
+      try {
+        const profile = await apiFetch<AuthMeResponse>('/api/v1/auth/me', {
+          token: stored,
+          cache: 'no-store',
+        })
+
+        setUser({
+          userId: String(profile.userId),
+          username: profile.username,
+          provider: profile.provider ?? undefined,
+          expiresAt: getAuthUserFromToken(stored)?.expiresAt,
+        })
+      } catch {
+        clearStoredAccessToken()
+        setToken(null)
+        setUser(null)
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    syncAuth().catch(() => {
+      clearStoredAccessToken()
+      setToken(null)
+      setUser(null)
+      setIsLoading(false)
+    })
   }, [])
 
   const startKakaoLogin = useCallback(async () => {

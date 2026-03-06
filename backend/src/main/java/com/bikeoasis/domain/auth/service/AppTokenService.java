@@ -22,7 +22,7 @@ public class AppTokenService {
     @Value("${app.jwt.audience:}")
     private String audience;
 
-    public String issueAccessToken(Long userId, long expiresInSec) {
+    public String issueAccessToken(Long userId, String username, long expiresInSec) {
         if (userId == null) {
             throw new BusinessException(500, "userId가 필요합니다.");
         }
@@ -35,6 +35,7 @@ public class AppTokenService {
                 .expiresAt(exp)
                 .subject(String.valueOf(userId))
                 .claim("uid", userId)
+                .claim("username", username)
                 ;
 
         if (audience != null && !audience.isBlank()) {

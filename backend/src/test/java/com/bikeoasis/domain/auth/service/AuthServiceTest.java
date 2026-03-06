@@ -1,5 +1,6 @@
 package com.bikeoasis.domain.auth.service;
 
+import com.bikeoasis.domain.auth.dto.AuthMeResponse;
 import com.bikeoasis.domain.auth.dto.AuthTokenResponse;
 import com.bikeoasis.domain.auth.dto.KakaoLoginRequest;
 import com.bikeoasis.domain.user.entity.User;
@@ -8,6 +9,7 @@ import com.bikeoasis.domain.user.repository.UserRepository;
 import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.infrastructure.kakao.KakaoAuthClient;
 import com.bikeoasis.infrastructure.kakao.KakaoOidcUserInfoClient;
+import com.bikeoasis.infrastructure.kakao.dto.KakaoOidcUserInfoResponse;
 import com.bikeoasis.infrastructure.kakao.dto.KakaoTokenResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,7 +127,7 @@ class AuthServiceTest {
                 Instant.now(),
                 Instant.now().plusSeconds(60),
                 Map.of("alg", "none"),
-                Map.of("sub", "kakao-sub", "nonce", "nonce-1")
+                Map.of("sub", "kakao-sub", "nonce", "nonce-1", "nickname", "테스트라이더")
         );
         when(kakaoIdTokenVerifier.verify("id-token")).thenReturn(jwt);
 
@@ -137,7 +139,7 @@ class AuthServiceTest {
             return user;
         });
 
-        when(appTokenService.issueAccessToken(eq(7L), anyLong())).thenReturn("app-jwt");
+        when(appTokenService.issueAccessToken(eq(7L), eq("테스트라이더"), anyLong())).thenReturn("app-jwt");
 
         AuthTokenResponse response = authService.loginWithKakao(
                 new KakaoLoginRequest("code", "verifier", "http://localhost:3000/auth/kakao/callback", "nonce-1")
@@ -163,7 +165,8 @@ class AuthServiceTest {
 
         when(kakaoIdTokenVerifier.verify("id-token"))
                 .thenThrow(new BusinessException(401, "유효하지 않은 Kakao id_token입니다."));
-        when(kakaoOidcUserInfoClient.fetchSub("kakao-access")).thenReturn("kakao-sub");
+        when(kakaoOidcUserInfoClient.fetchUserInfo("kakao-access"))
+                .thenReturn(new KakaoOidcUserInfoResponse("kakao-sub", "카카오닉네임", null, null));
 
         when(userRepository.findByProviderAndProviderSub(AuthProvider.KAKAO, "kakao-sub"))
                 .thenReturn(Optional.empty());
@@ -173,7 +176,7 @@ class AuthServiceTest {
             return user;
         });
 
-        when(appTokenService.issueAccessToken(eq(9L), anyLong())).thenReturn("app-jwt-fallback");
+        when(appTokenService.issueAccessToken(eq(9L), eq("카카오닉네임"), anyLong())).thenReturn("app-jwt-fallback");
 
         AuthTokenResponse response = authService.loginWithKakao(
                 new KakaoLoginRequest("code", "verifier", "http://localhost:3000/auth/kakao/callback", "nonce-1")
@@ -181,5 +184,21 @@ class AuthServiceTest {
 
         Assertions.assertThat(response.accessToken()).isEqualTo("app-jwt-fallback");
         Assertions.assertThat(response.expiresInSec()).isEqualTo(600L);
+    }
+
+    @Test
+    void getCurrentUser_returnsNormalizedProfile() {
+        User user = User.builder()
+                .id(15L)
+                .provider(AuthProvider.KAKAO)
+                .username("  라이더김  ")
+                .build();
+        when(userRepository.findById(15L)).thenReturn(Optional.of(user));
+
+        AuthMeResponse response = authService.getCurrentUser(15L);
+
+        Assertions.assertThat(response.userId()).isEqualTo(15L);
+        Assertions.assertThat(response.username()).isEqualTo("라이더김");
+        Assertions.assertThat(response.provider()).isEqualTo("KAKAO");
     }
 }
