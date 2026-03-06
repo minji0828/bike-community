@@ -12,7 +12,7 @@ import { CourseCard } from '@/components/course-card'
 import { sampleCourses, sampleRides } from '@/lib/sample-data'
 
 export default function ProfilePage() {
-  const { isAuthenticated, logout, user } = useAuth()
+  const { isAuthenticated, logout, user, authError: providerAuthError } = useAuth()
   const [authError, setAuthError] = useState<string | null>(null)
   const [loginErrorMessage] = useState<string | null>(() => {
     if (typeof window === 'undefined') {
@@ -90,7 +90,13 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {(authError || loginErrorMessage) && <p className="text-sm text-rose-600">{authError || loginErrorMessage}</p>}
+            {(authError || providerAuthError || loginErrorMessage) && (
+              <p className="text-sm text-rose-600">{authError || providerAuthError || loginErrorMessage}</p>
+            )}
+
+            {!isAuthenticated && !loginErrorMessage && providerAuthError && (
+              <p className="text-xs text-muted-foreground">토큰이 남아 있어도 서버 인증 확인에 실패하면 자동으로 로그아웃 처리돼요.</p>
+            )}
 
             {isAuthenticated ? (
               <div className="space-y-2">

@@ -27,6 +27,7 @@ type AuthContextValue = {
   user: AuthUser | null
   isLoading: boolean
   isAuthenticated: boolean
+  authError: string | null
   startKakaoLogin: () => Promise<void>
   completeKakaoLogin: (params: { code: string; state: string }) => Promise<void>
   logout: () => void
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
     const syncAuth = async () => {
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearStoredAccessToken()
         setToken(null)
         setUser(null)
+        setAuthError(null)
         setIsLoading(false)
         return
       }
@@ -53,10 +56,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(stored)
       setStoredAccessToken(stored)
       setUser(getAuthUserFromToken(stored))
+      setAuthError(null)
 
       try {
-        const profile = await apiFetch<AuthMeResponse>('/api/v1/auth/me', {
-          token: stored,
+        const profile = await apiFetch<AuthMeResponse>('/api/auth/me', {
           cache: 'no-store',
         })
 
@@ -70,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearStoredAccessToken()
         setToken(null)
         setUser(null)
+        setAuthError('로그인 상태를 확인하지 못했습니다. 다시 로그인해주세요.')
       } finally {
         setIsLoading(false)
       }
@@ -79,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearStoredAccessToken()
       setToken(null)
       setUser(null)
+      setAuthError('로그인 상태를 확인하지 못했습니다. 다시 로그인해주세요.')
       setIsLoading(false)
     })
   }, [])
@@ -147,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearKakaoLoginSession()
     setToken(null)
     setUser(null)
+    setAuthError(null)
   }, [])
 
   const value = useMemo(
@@ -155,11 +161,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isLoading,
       isAuthenticated: Boolean(token && user),
+      authError,
       startKakaoLogin,
       completeKakaoLogin,
       logout,
     }),
-    [completeKakaoLogin, isLoading, logout, startKakaoLogin, token, user]
+    [authError, completeKakaoLogin, isLoading, logout, startKakaoLogin, token, user]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
