@@ -61,13 +61,21 @@ export class SimpleStompClient {
       this.socket = new WebSocket(this.options.url)
 
       this.socket.onopen = () => {
-        this.socket?.send(
-          buildFrame('CONNECT', {
-            'accept-version': '1.2',
-            'heart-beat': '0,0',
-            ...this.options.connectHeaders,
-          })
-        )
+        const socket = this.socket
+        if (!socket || socket.readyState != WebSocket.OPEN) {
+          return
+        }
+        try {
+          socket.send(
+            buildFrame('CONNECT', {
+              'accept-version': '1.2',
+              'heart-beat': '0,0',
+              ...this.options.connectHeaders,
+            })
+          )
+        } catch {
+          // ignore
+        }
       }
 
       this.socket.onmessage = (event) => {
@@ -123,12 +131,16 @@ export class SimpleStompClient {
       return
     }
 
-    this.socket.send(
-      buildFrame('SUBSCRIBE', {
-        id,
-        destination,
-      })
-    )
+    try {
+      this.socket.send(
+        buildFrame('SUBSCRIBE', {
+          id,
+          destination,
+        })
+      )
+    } catch {
+      // ignore
+    }
   }
 
   send(destination: string, body = '', headers: Record<string, string> = {}) {
@@ -136,16 +148,20 @@ export class SimpleStompClient {
       return
     }
 
-    this.socket.send(
-      buildFrame(
-        'SEND',
-        {
-          destination,
-          ...headers,
-        },
-        body
+    try {
+      this.socket.send(
+        buildFrame(
+          'SEND',
+          {
+            destination,
+            ...headers,
+          },
+          body
+        )
       )
-    )
+    } catch {
+      // ignore
+    }
   }
 
   disconnect() {
@@ -156,7 +172,11 @@ export class SimpleStompClient {
     this.isDisconnecting = true
 
     if (this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(buildFrame('DISCONNECT'))
+      try {
+        this.socket.send(buildFrame('DISCONNECT'))
+      } catch {
+        // ignore
+      }
     }
 
     if (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING) {

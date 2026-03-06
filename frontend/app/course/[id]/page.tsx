@@ -51,11 +51,13 @@ export default function CourseDetailPage() {
   const [createLoading, setCreateLoading] = useState(false)
   const [createSuccessMessage, setCreateSuccessMessage] = useState<string | null>(null)
 
-  const defaultStartAt = useMemo(() => {
+  const [defaultStartAt, setDefaultStartAt] = useState('')
+
+  useEffect(() => {
     const date = new Date()
     date.setDate(date.getDate() + 1)
     date.setMinutes(0, 0, 0)
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    setDefaultStartAt(new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16))
   }, [])
 
   const [createForm, setCreateForm] = useState({
