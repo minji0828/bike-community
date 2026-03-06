@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           method: 'GET',
           headers: {
             Accept: 'application/json',
+            Authorization: `Bearer ${stored}`,
           },
           cache: 'no-store',
           credentials: 'same-origin',
@@ -87,11 +88,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           provider: profile.provider ?? undefined,
           expiresAt: getAuthUserFromToken(stored)?.expiresAt,
         })
-      } catch {
+      } catch (error) {
         clearStoredAccessToken()
         setToken(null)
         setUser(null)
-        setAuthError('로그인 상태를 확인하지 못했습니다. 다시 로그인해주세요.')
+        if (error instanceof Error && /인증|토큰/.test(error.message)) {
+          setAuthError('저장된 로그인 정보가 만료되었어요. 다시 로그인해주세요.')
+        } else {
+          setAuthError('로그인 상태를 확인하지 못했습니다. 다시 로그인해주세요.')
+        }
       } finally {
         setIsLoading(false)
       }

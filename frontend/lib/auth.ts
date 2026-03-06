@@ -67,7 +67,11 @@ export function getStoredAccessToken() {
   if (!isBrowser()) {
     return null
   }
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY) || getCookie(ACCESS_TOKEN_COOKIE_KEY)
+
+  const cookieToken = getCookie(ACCESS_TOKEN_COOKIE_KEY)
+  const localToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+
+  return cookieToken || localToken
 }
 
 export function setStoredAccessToken(token: string) {
