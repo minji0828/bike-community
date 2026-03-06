@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <frontend-dist-tar.gz>"
-  exit 1
-fi
-
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 DEPLOY_DIR="${ROOT_DIR}/deploy"
-ARCHIVE_PATH="$1"
-TARGET_BASE="${DEPLOY_DIR}/runtime/frontend"
-RELEASE_DIR="${TARGET_BASE}/releases/$(date +%Y%m%d_%H%M%S)"
-CURRENT_LINK="${TARGET_BASE}/current"
 COMPOSE_FILE="${DEPLOY_DIR}/docker-compose.prod.yml"
 
-mkdir -p "${RELEASE_DIR}" "${TARGET_BASE}/releases"
+docker compose -f "${COMPOSE_FILE}" build frontend-web
+docker compose -f "${COMPOSE_FILE}" up -d frontend-web nginx
 
-tar -xzf "${ARCHIVE_PATH}" -C "${RELEASE_DIR}"
-ln -sfn "${RELEASE_DIR}" "${CURRENT_LINK}"
+echo "[deploy] waiting for frontend-web health..."
+for i in {1..30}; do
+  if docker compose -f "${COMPOSE_FILE}" exec -T nginx \
+    wget -qO- "http://frontend-web:3000/api/health" >/dev/null; then
+    echo "[deploy] frontend-web is healthy"
+    exit 0
+  fi
 
-docker compose -f "${COMPOSE_FILE}" up -d nginx
-docker compose -f "${COMPOSE_FILE}" exec -T nginx nginx -s reload
+  if [[ $i -eq 30 ]]; then
+    echo "[deploy] frontend-web health check failed"
+    exit 1
+  fi
 
-echo "[deploy] frontend deployed to ${RELEASE_DIR}"
+  sleep 2
+done

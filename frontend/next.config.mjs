@@ -1,10 +1,43 @@
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+const apiWsUrl = apiBaseUrl.replace(/^http/i, 'ws')
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://dapi.kakao.com https://t1.daumcdn.net https://kauth.kakao.com https://developers.kakao.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  `connect-src 'self' ${apiBaseUrl} ${apiWsUrl} https://kauth.kakao.com https://kapi.kakao.com https://dapi.kakao.com`,
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://kauth.kakao.com",
+].join('; ')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  output: 'standalone',
   images: {
     unoptimized: true,
+  },
+  turbopack: {
+    root: __dirname,
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'Content-Security-Policy', value: contentSecurityPolicy },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Permissions-Policy', value: 'geolocation=(self)' },
+        ],
+      },
+    ]
   },
 }
 

@@ -13,11 +13,14 @@ import { getNearbyToilets, toPoiModel } from '@/lib/pois'
 import { sampleCourses, nearbyPOIs } from '@/lib/sample-data'
 
 export default function HomePage() {
+  const geolocationAvailable = typeof navigator !== 'undefined' && 'geolocation' in navigator
   const [featuredCourses, setFeaturedCourses] = useState(sampleCourses)
   const [featuredFallback, setFeaturedFallback] = useState(false)
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [nearby, setNearby] = useState(nearbyPOIs)
-  const [locationMessage, setLocationMessage] = useState('현재 위치를 확인하는 중...')
+  const [locationMessage, setLocationMessage] = useState(
+    geolocationAvailable ? '현재 위치를 확인하는 중...' : '브라우저가 위치 기능을 지원하지 않습니다.'
+  )
 
   useEffect(() => {
     getFeaturedCourses()
@@ -35,8 +38,7 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationMessage('브라우저가 위치 기능을 지원하지 않습니다.')
+    if (!geolocationAvailable) {
       return
     }
 
@@ -71,7 +73,7 @@ export default function HomePage() {
         timeout: 10000,
       }
     )
-  }, [])
+  }, [geolocationAvailable])
 
   const displayedPois = useMemo(() => nearby.slice(0, 3), [nearby])
 

@@ -52,6 +52,8 @@ public class CourseService {
 
     private static final double LOOP_THRESHOLD_KM = 0.1;
     private static final double DEFAULT_AVG_SPEED_KMH = 15.0;
+    private static final int MAX_GPX_XML_CHARS = 5_000_000;
+    private static final int MAX_GPX_TRACK_POINTS = 20_000;
 
     private final CourseRepository courseRepository;
     private final TagRepository tagRepository;
@@ -107,6 +109,7 @@ public class CourseService {
         if (request.getTitle() == null || request.getTitle().isBlank()) {
             throw new BusinessException(400, "title은 필수입니다.");
         }
+        validateGpxXml(request.getGpxXml());
 
         List<Coordinate> coordinateList = parseCoordinatesFromGpx(request.getGpxXml());
         if (coordinateList.size() < 2) {
@@ -314,6 +317,7 @@ public class CourseService {
         if (title == null || title.isBlank() || gpxXml == null || gpxXml.isBlank()) {
             return;
         }
+        validateGpxXml(gpxXml);
         if (courseRepository.existsByTitle(title)) {
             return;
         }
@@ -530,6 +534,9 @@ public class CourseService {
 
             Document document = factory.newDocumentBuilder().parse(new InputSource(new StringReader(gpxXml)));
             NodeList trackPoints = document.getElementsByTagNameNS("*", "trkpt");
+            if (trackPoints.getLength() > MAX_GPX_TRACK_POINTS) {
+                throw new BusinessException(400, "GPX 경로 포인트가 너무 많습니다.");
+            }
 
             List<Coordinate> coordinates = new java.util.ArrayList<>();
             for (int i = 0; i < trackPoints.getLength(); i++) {
@@ -542,8 +549,16 @@ public class CourseService {
                 coordinates.add(new Coordinate(Double.parseDouble(lon), Double.parseDouble(lat)));
             }
             return coordinates;
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException(400, "유효하지 않은 GPX 형식입니다.");
+        }
+    }
+
+    private void validateGpxXml(String gpxXml) {
+        if (gpxXml.length() > MAX_GPX_XML_CHARS) {
+            throw new BusinessException(400, "GPX XML 크기가 너무 큽니다.");
         }
     }
 

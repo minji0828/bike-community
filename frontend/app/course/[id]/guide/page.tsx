@@ -18,7 +18,7 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
   const [isPlaying, setIsPlaying] = useState(true)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [progress, setProgress] = useState(0)
-  const [isOffRoute, setIsOffRoute] = useState(false)
+  const isOffRoute = progress > 30 && progress < 40
 
   useEffect(() => {
     if (!Number.isFinite(courseId)) {
@@ -42,14 +42,6 @@ export default function GuidePage({ params }: { params: Promise<{ id: string }> 
     }, 1000)
     return () => clearInterval(timer)
   }, [isPlaying])
-
-  useEffect(() => {
-    if (progress > 30 && progress < 40) {
-      setIsOffRoute(true)
-    } else {
-      setIsOffRoute(false)
-    }
-  }, [progress])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)

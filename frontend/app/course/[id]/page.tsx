@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useMemo, useState } from 'react'
+import { use, useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar, Clock, MessageCircle, Plus, Route, MapPin, Navigation, Heart, Users } from 'lucide-react'
@@ -93,7 +93,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     })
   }, [course.name, course.path, defaultStartAt])
 
-  const loadMeetups = async () => {
+  const loadMeetups = useCallback(async () => {
     if (!canFetchMeetups) {
       setMeetupsLoading(false)
       setMeetupsError('모임을 조회할 수 없는 코스입니다.')
@@ -110,11 +110,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     } finally {
       setMeetupsLoading(false)
     }
-  }
+  }, [canFetchMeetups, courseId, token])
 
   useEffect(() => {
     void loadMeetups()
-  }, [courseId, token])
+  }, [loadMeetups])
 
   const parseOptionalNumber = (value: string) => {
     if (!value.trim()) {

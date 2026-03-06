@@ -42,9 +42,8 @@ export function MapView({
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isReady, setIsReady] = useState(false)
-  const [loadError, setLoadError] = useState<string | null>(null)
-
   const mapKey = process.env.NEXT_PUBLIC_KAKAO_MAP_JS_KEY
+  const [loadError, setLoadError] = useState<string | null>(mapKey ? null : 'NEXT_PUBLIC_KAKAO_MAP_JS_KEY가 설정되지 않았습니다.')
   const resolvedPadding = useMemo(
     () => ({
       top: fitBoundsPadding?.top ?? 32,
@@ -70,7 +69,6 @@ export function MapView({
 
   useEffect(() => {
     if (!mapKey) {
-      setLoadError('NEXT_PUBLIC_KAKAO_MAP_JS_KEY가 설정되지 않았습니다.')
       return
     }
 

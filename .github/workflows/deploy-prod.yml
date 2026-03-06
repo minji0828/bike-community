@@ -35,14 +35,14 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: frontend/mobile/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Build frontend web
+      - name: Verify frontend web
         if: ${{ inputs.deploy_frontend }}
-        working-directory: frontend/mobile
+        working-directory: frontend
         run: |
           npm ci
-          npm run build:web
+          npm run check
 
       - name: Upload deployment files to EC2 (backend + frontend)
         if: ${{ inputs.deploy_frontend }}
@@ -51,7 +51,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "backend,deploy,frontend/mobile/dist-web"
+          source: "backend,deploy,frontend"
           target: ${{ secrets.EC2_APP_DIR }}
           overwrite: true
 
@@ -88,6 +88,5 @@ jobs:
             fi
 
             if [[ "${{ inputs.deploy_frontend }}" == "true" ]]; then
-              tar -czf /tmp/frontend-dist.tar.gz -C frontend/mobile dist-web
-              deploy/scripts/deploy_frontend.sh /tmp/frontend-dist.tar.gz
+              deploy/scripts/deploy_frontend.sh
             fi

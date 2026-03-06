@@ -44,6 +44,8 @@ app:
     issuer: bikeoasis
     access-token-exp-seconds: 3600
     audience: ${APP_JWT_AUDIENCE:}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
 
 kakao:
   oauth:

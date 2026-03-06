@@ -63,10 +63,24 @@ npm run dev
   - `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080`
   - `NEXT_PUBLIC_KAKAO_CLIENT_ID=<카카오 REST API Key>`
   - `NEXT_PUBLIC_KAKAO_REDIRECT_URI=http://localhost:3000/auth/kakao/callback`
+  - `NEXT_PUBLIC_KAKAO_MAP_JS_KEY=<카카오 JavaScript Key>`
 - 백엔드 env도 함께 필요
   - `KAKAO_REST_API_KEY`
   - `KAKAO_CLIENT_SECRET`(사용 시)
   - `KAKAO_ALLOWED_REDIRECT_URIS=http://localhost:3000/auth/kakao/callback`
+
+배포 전 로컬 품질 체크:
+
+```bash
+cd frontend
+npm run check
+```
+
+- 현재 로컬/CI 품질 게이트는 `eslint + tsc + next build --webpack` 기준으로 검증합니다.
+
+프론트 헬스체크:
+
+- `http://localhost:3000/api/health`
 
 ---
 
@@ -80,5 +94,8 @@ npm run dev
   - 백엔드 의존성 갱신 후 재기동 (`springdoc` 버전 호환 문제였던 경우)
 - 카카오 로그인 후 `허용되지 않은 redirectUri입니다.`
   - 백엔드의 `KAKAO_ALLOWED_REDIRECT_URIS`와 프론트 `.env.local`의 redirect URI가 정확히 일치하는지 확인
+- 카카오 지도가 계속 빈 화면 / SDK 로드 실패
+  - `NEXT_PUBLIC_KAKAO_MAP_JS_KEY`에 JavaScript 키를 넣었는지 확인
+  - 카카오 콘솔 웹 도메인에 `http://localhost:3000` 이 등록됐는지 확인
 - 채팅방 연결 실패 / 403
   - 해당 사용자가 먼저 코스모임에 참가했는지 확인

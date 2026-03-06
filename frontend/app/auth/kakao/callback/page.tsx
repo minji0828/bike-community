@@ -12,26 +12,23 @@ function KakaoCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { completeKakaoLogin } = useAuth()
-  const [status, setStatus] = useState<'loading' | 'error'>('loading')
-  const [message, setMessage] = useState('카카오 로그인 정보를 확인하고 있어요...')
+  const code = searchParams.get('code')
+  const state = searchParams.get('state')
+  const error = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
+  const syncErrorMessage = error
+    ? errorDescription || '카카오 로그인에 실패했습니다.'
+    : !code || !state
+      ? '카카오 로그인 응답이 올바르지 않습니다.'
+      : null
+  const [asyncErrorMessage, setAsyncErrorMessage] = useState<string | null>(null)
+  const status: 'loading' | 'error' = syncErrorMessage || asyncErrorMessage ? 'error' : 'loading'
+  const message = syncErrorMessage || asyncErrorMessage || '카카오 로그인 정보를 확인하고 있어요...'
 
   useEffect(() => {
     let isMounted = true
 
-    const code = searchParams.get('code')
-    const state = searchParams.get('state')
-    const error = searchParams.get('error')
-    const errorDescription = searchParams.get('error_description')
-
-    if (error) {
-      setStatus('error')
-      setMessage(errorDescription || '카카오 로그인에 실패했습니다.')
-      return
-    }
-
-    if (!code || !state) {
-      setStatus('error')
-      setMessage('카카오 로그인 응답이 올바르지 않습니다.')
+    if (syncErrorMessage || !code || !state) {
       return
     }
 
@@ -46,14 +43,13 @@ function KakaoCallbackContent() {
         if (!isMounted) {
           return
         }
-        setStatus('error')
-        setMessage(loginError instanceof Error ? loginError.message : '로그인 처리에 실패했습니다.')
+        setAsyncErrorMessage(loginError instanceof Error ? loginError.message : '로그인 처리에 실패했습니다.')
       })
 
     return () => {
       isMounted = false
     }
-  }, [completeKakaoLogin, router, searchParams])
+  }, [code, completeKakaoLogin, router, state, syncErrorMessage])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

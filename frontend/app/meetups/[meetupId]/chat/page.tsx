@@ -14,11 +14,10 @@ export default function MeetupChatPage({ params }: { params: Promise<{ meetupId:
   const parsedMeetupId = Number(meetupId)
   const { token, isAuthenticated } = useAuth()
   const [meetup, setMeetup] = useState<CourseMeetup | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(Number.isFinite(parsedMeetupId) ? null : '잘못된 모임 ID입니다.')
 
   useEffect(() => {
     if (!Number.isFinite(parsedMeetupId)) {
-      setError('잘못된 모임 ID입니다.')
       return
     }
 
