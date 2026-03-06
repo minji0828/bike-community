@@ -13,6 +13,7 @@ import { sampleCourses, sampleRides } from '@/lib/sample-data'
 export default function ProfilePage() {
   const { isAuthenticated, isLoading, startKakaoLogin, logout, user } = useAuth()
   const [authError, setAuthError] = useState<string | null>(null)
+  const [isStartingLogin, setIsStartingLogin] = useState(false)
   const totalDistance = sampleRides.reduce((sum, ride) => sum + ride.distance, 0)
   const totalTime = sampleRides.reduce((sum, ride) => sum + ride.duration, 0)
   const avgSpeed = sampleRides.reduce((sum, ride) => sum + ride.avgSpeed, 0) / sampleRides.length
@@ -25,11 +26,17 @@ export default function ProfilePage() {
   }
 
   const handleKakaoLogin = async () => {
+    if (isStartingLogin) {
+      return
+    }
+
     try {
+      setIsStartingLogin(true)
       setAuthError(null)
       await startKakaoLogin()
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : '카카오 로그인을 시작하지 못했습니다.')
+      setIsStartingLogin(false)
     }
   }
 
@@ -86,10 +93,12 @@ export default function ProfilePage() {
               </div>
             ) : (
               <Button
+                type="button"
                 className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]"
                 onClick={handleKakaoLogin}
+                onTouchEnd={handleKakaoLogin}
               >
-                카카오로 로그인
+                {isStartingLogin ? '카카오 로그인으로 이동 중...' : '카카오로 로그인'}
               </Button>
             )}
           </CardContent>
