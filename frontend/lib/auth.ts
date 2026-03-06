@@ -1,5 +1,6 @@
 const ACCESS_TOKEN_KEY = 'bikeoasis.access_token'
 const KAKAO_LOGIN_SESSION_KEY = 'bikeoasis.kakao.login_session'
+const KAKAO_LOGIN_SESSION_COOKIE_KEY = 'bikeoasis.kakao.login_session'
 
 type KakaoLoginSession = {
   state: string
@@ -15,6 +16,36 @@ export type AuthUser = {
 
 function isBrowser() {
   return typeof window !== 'undefined'
+}
+
+function getCookie(name: string) {
+  if (!isBrowser()) {
+    return null
+  }
+
+  const cookies = window.document.cookie ? window.document.cookie.split('; ') : []
+  const target = cookies.find((entry) => entry.startsWith(`${name}=`))
+  if (!target) {
+    return null
+  }
+
+  return decodeURIComponent(target.slice(name.length + 1))
+}
+
+function setCookie(name: string, value: string, maxAgeSeconds = 600) {
+  if (!isBrowser()) {
+    return
+  }
+
+  window.document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; samesite=lax`
+}
+
+function clearCookie(name: string) {
+  if (!isBrowser()) {
+    return
+  }
+
+  window.document.cookie = `${name}=; path=/; max-age=0; samesite=lax`
 }
 
 function decodeJwtPayload(token: string) {
@@ -85,7 +116,9 @@ export function saveKakaoLoginSession(session: KakaoLoginSession) {
   if (!isBrowser()) {
     return
   }
-  window.sessionStorage.setItem(KAKAO_LOGIN_SESSION_KEY, JSON.stringify(session))
+  const serialized = JSON.stringify(session)
+  window.sessionStorage.setItem(KAKAO_LOGIN_SESSION_KEY, serialized)
+  setCookie(KAKAO_LOGIN_SESSION_COOKIE_KEY, serialized)
 }
 
 export function getKakaoLoginSession(): KakaoLoginSession | null {
@@ -94,12 +127,14 @@ export function getKakaoLoginSession(): KakaoLoginSession | null {
   }
 
   const raw = window.sessionStorage.getItem(KAKAO_LOGIN_SESSION_KEY)
-  if (!raw) {
+  const cookieRaw = getCookie(KAKAO_LOGIN_SESSION_COOKIE_KEY)
+  const serialized = raw || cookieRaw
+  if (!serialized) {
     return null
   }
 
   try {
-    return JSON.parse(raw) as KakaoLoginSession
+    return JSON.parse(serialized) as KakaoLoginSession
   } catch {
     return null
   }
@@ -110,6 +145,7 @@ export function clearKakaoLoginSession() {
     return
   }
   window.sessionStorage.removeItem(KAKAO_LOGIN_SESSION_KEY)
+  clearCookie(KAKAO_LOGIN_SESSION_COOKIE_KEY)
 }
 
 export function getKakaoRedirectUri() {

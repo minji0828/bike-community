@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Settings, ChevronRight, Route, Clock, Zap, Heart } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
@@ -11,9 +12,8 @@ import { CourseCard } from '@/components/course-card'
 import { sampleCourses, sampleRides } from '@/lib/sample-data'
 
 export default function ProfilePage() {
-  const { isAuthenticated, isLoading, startKakaoLogin, logout, user } = useAuth()
+  const { isAuthenticated, logout, user } = useAuth()
   const [authError, setAuthError] = useState<string | null>(null)
-  const [isStartingLogin, setIsStartingLogin] = useState(false)
   const totalDistance = sampleRides.reduce((sum, ride) => sum + ride.distance, 0)
   const totalTime = sampleRides.reduce((sum, ride) => sum + ride.duration, 0)
   const avgSpeed = sampleRides.reduce((sum, ride) => sum + ride.avgSpeed, 0) / sampleRides.length
@@ -23,21 +23,6 @@ export default function ProfilePage() {
     const hours = Math.floor(seconds / 3600)
     const mins = Math.floor((seconds % 3600) / 60)
     return `${hours}시간 ${mins}분`
-  }
-
-  const handleKakaoLogin = async () => {
-    if (isStartingLogin) {
-      return
-    }
-
-    try {
-      setIsStartingLogin(true)
-      setAuthError(null)
-      await startKakaoLogin()
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : '카카오 로그인을 시작하지 못했습니다.')
-      setIsStartingLogin(false)
-    }
   }
 
   return (
@@ -92,13 +77,10 @@ export default function ProfilePage() {
                 </Button>
               </div>
             ) : (
-              <Button
-                type="button"
-                className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]"
-                onClick={handleKakaoLogin}
-                onTouchEnd={handleKakaoLogin}
-              >
-                {isStartingLogin ? '카카오 로그인으로 이동 중...' : '카카오로 로그인'}
+              <Button asChild className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]">
+                <Link href="/auth/kakao/start" onClick={() => setAuthError(null)}>
+                  카카오로 로그인
+                </Link>
               </Button>
             )}
           </CardContent>
