@@ -8,8 +8,6 @@ import com.bikeoasis.domain.user.enums.AuthProvider;
 import com.bikeoasis.domain.user.repository.UserRepository;
 import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.infrastructure.kakao.KakaoAuthClient;
-import com.bikeoasis.infrastructure.kakao.KakaoOidcUserInfoClient;
-import com.bikeoasis.infrastructure.kakao.dto.KakaoOidcUserInfoResponse;
 import com.bikeoasis.infrastructure.kakao.dto.KakaoTokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +29,6 @@ public class AuthService {
 
     private final KakaoAuthClient kakaoAuthClient;
     private final KakaoIdTokenVerifier kakaoIdTokenVerifier;
-    private final KakaoOidcUserInfoClient kakaoOidcUserInfoClient;
     private final AppTokenService appTokenService;
     private final UserRepository userRepository;
 
@@ -70,46 +67,25 @@ public class AuthService {
             throw new BusinessException(400, "Kakao id_token이 없습니다. OIDC(openid scope) 설정을 확인하세요.");
         }
 
-        String kakaoSub;
-        String kakaoNickname = null;
-        try {
-            Jwt idToken = kakaoIdTokenVerifier.verify(tokenResponse.idToken());
+        Jwt idToken = kakaoIdTokenVerifier.verify(tokenResponse.idToken());
 
-            if (request.nonce() != null && !request.nonce().isBlank()) {
-                String nonce = idToken.getClaimAsString("nonce");
-                if (nonce == null || nonce.isBlank() || !request.nonce().equals(nonce)) {
-                    throw new BusinessException(401, "Kakao nonce가 일치하지 않습니다.");
-                }
-            }
-
-            kakaoSub = idToken.getSubject();
-            if (kakaoSub == null || kakaoSub.isBlank()) {
-                throw new BusinessException(400, "Kakao sub(subject)가 없습니다.");
-            }
-            kakaoNickname = firstNonBlank(
-                    idToken.getClaimAsString("nickname"),
-                    idToken.getClaimAsString("preferred_username"),
-                    idToken.getClaimAsString("name")
-            );
-        } catch (BusinessException e) {
-            if (!"유효하지 않은 Kakao id_token입니다.".equals(e.getMessage())) {
-                throw e;
-            }
-
-            log.warn("Falling back to Kakao OIDC userinfo because id_token verification failed.");
-            KakaoOidcUserInfoResponse userInfo = kakaoOidcUserInfoClient.fetchUserInfo(tokenResponse.accessToken());
-            kakaoSub = userInfo.sub();
-            kakaoNickname = firstNonBlank(userInfo.nickname(), userInfo.preferredUsername(), userInfo.name());
-        }
-
-        if (kakaoNickname == null || kakaoNickname.isBlank()) {
-            try {
-                KakaoOidcUserInfoResponse userInfo = kakaoOidcUserInfoClient.fetchUserInfo(tokenResponse.accessToken());
-                kakaoNickname = firstNonBlank(kakaoNickname, userInfo.nickname(), userInfo.preferredUsername(), userInfo.name());
-            } catch (BusinessException e) {
-                log.warn("Kakao nickname fetch skipped: {}", e.getMessage());
+        if (request.nonce() != null && !request.nonce().isBlank()) {
+            String nonce = idToken.getClaimAsString("nonce");
+            if (nonce == null || nonce.isBlank() || !request.nonce().equals(nonce)) {
+                throw new BusinessException(401, "Kakao nonce가 일치하지 않습니다.");
             }
         }
+
+        String kakaoSub = idToken.getSubject();
+        if (kakaoSub == null || kakaoSub.isBlank()) {
+            throw new BusinessException(400, "Kakao sub(subject)가 없습니다.");
+        }
+
+        String kakaoNickname = firstNonBlank(
+                idToken.getClaimAsString("nickname"),
+                idToken.getClaimAsString("preferred_username"),
+                idToken.getClaimAsString("name")
+        );
 
         final String resolvedKakaoSub = kakaoSub;
         final String resolvedUsername = normalizeUsername(kakaoNickname);

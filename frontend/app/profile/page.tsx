@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Settings, ChevronRight, Route, Clock, Zap, Heart, CheckCircle2, MessageCircle, Users } from 'lucide-react'
+import { Settings, ChevronRight, Route, Clock, Zap, Heart } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -33,13 +33,6 @@ export default function ProfilePage() {
     }
 
     return predefinedMessages[loginError] || loginError
-  })
-  const [loginSuccess] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return false
-    }
-
-    return new URLSearchParams(window.location.search).get('login') === 'success'
   })
   const totalDistance = sampleRides.reduce((sum, ride) => sum + ride.distance, 0)
   const totalTime = sampleRides.reduce((sum, ride) => sum + ride.duration, 0)
@@ -83,37 +76,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {isAuthenticated && (
-          <Card className="mb-4 overflow-hidden border-emerald-200 bg-emerald-50/70">
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-emerald-500/10 p-2 text-emerald-600">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-emerald-700">{loginSuccess ? '카카오 로그인 성공' : '현재 로그인된 상태예요'}</p>
-                  <h3 className="mt-1 text-lg font-bold text-foreground">{riderName}님, 코스모임과 채팅을 바로 사용할 수 있어요.</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">이제 모임 참가, 단체채팅, 기록 저장이 로그인 기준으로 동작해요.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button asChild variant="secondary" className="rounded-full">
-                  <Link href="/explore">
-                    <Users className="mr-2 h-4 w-4" />
-                    코스 보러가기
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="rounded-full bg-white">
-                  <Link href="/meetups/1/chat">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    채팅 바로가기
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Card className="mb-6 overflow-hidden">
           <CardContent className="space-y-4 p-4">
             <div className="flex items-start justify-between gap-3">
@@ -139,20 +101,13 @@ export default function ProfilePage() {
             )}
 
             {isAuthenticated ? (
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-muted/60 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">로그인 사용자</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{user?.username || riderName}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">사용자 ID: {user?.userId}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button asChild variant="secondary" className="rounded-full">
-                    <Link href="/ride">라이딩 시작</Link>
-                  </Button>
-                  <Button variant="outline" className="rounded-full" onClick={logout}>
-                    로그아웃
-                  </Button>
-                </div>
+              <div className="rounded-2xl bg-muted/60 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">로그인 사용자</p>
+                <p className="mt-1 text-xl font-bold text-foreground">{user?.username || riderName}</p>
+                <p className="mt-1 text-sm text-muted-foreground">카카오 계정으로 연결됨</p>
+                <Button variant="outline" className="mt-4 w-full rounded-full bg-white" onClick={logout}>
+                  로그아웃
+                </Button>
               </div>
             ) : (
               <Button asChild className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]">

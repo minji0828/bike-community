@@ -8,8 +8,6 @@ import com.bikeoasis.domain.user.enums.AuthProvider;
 import com.bikeoasis.domain.user.repository.UserRepository;
 import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.infrastructure.kakao.KakaoAuthClient;
-import com.bikeoasis.infrastructure.kakao.KakaoOidcUserInfoClient;
-import com.bikeoasis.infrastructure.kakao.dto.KakaoOidcUserInfoResponse;
 import com.bikeoasis.infrastructure.kakao.dto.KakaoTokenResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,9 +37,6 @@ class AuthServiceTest {
     private KakaoIdTokenVerifier kakaoIdTokenVerifier;
 
     @Mock
-    private KakaoOidcUserInfoClient kakaoOidcUserInfoClient;
-
-    @Mock
     private AppTokenService appTokenService;
 
     @Mock
@@ -51,7 +46,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(kakaoAuthClient, kakaoIdTokenVerifier, kakaoOidcUserInfoClient, appTokenService, userRepository);
+        authService = new AuthService(kakaoAuthClient, kakaoIdTokenVerifier, appTokenService, userRepository);
         ReflectionTestUtils.setField(authService, "kakaoClientId", "client-id");
         ReflectionTestUtils.setField(authService, "allowedRedirectUris", "http://localhost:3000/auth/kakao/callback");
         ReflectionTestUtils.setField(authService, "accessTokenExpSeconds", 600L);
@@ -150,7 +145,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void loginWithKakao_fallsBackToUserInfoWhenIdTokenVerificationFails() {
+    void loginWithKakao_throwsWhenIdTokenVerificationFails() {
         KakaoTokenResponse tokenResponse = new KakaoTokenResponse(
                 "kakao-access",
                 "bearer",
@@ -165,25 +160,16 @@ class AuthServiceTest {
 
         when(kakaoIdTokenVerifier.verify("id-token"))
                 .thenThrow(new BusinessException(401, "유효하지 않은 Kakao id_token입니다."));
-        when(kakaoOidcUserInfoClient.fetchUserInfo("kakao-access"))
-                .thenReturn(new KakaoOidcUserInfoResponse("kakao-sub", "카카오닉네임", null, null));
 
-        when(userRepository.findByProviderAndProviderSub(AuthProvider.KAKAO, "kakao-sub"))
-                .thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User user = invocation.getArgument(0);
-            user.setId(9L);
-            return user;
-        });
-
-        when(appTokenService.issueAccessToken(eq(9L), eq("카카오닉네임"), anyLong())).thenReturn("app-jwt-fallback");
-
-        AuthTokenResponse response = authService.loginWithKakao(
-                new KakaoLoginRequest("code", "verifier", "http://localhost:3000/auth/kakao/callback", "nonce-1")
+        BusinessException ex = Assertions.catchThrowableOfType(
+                () -> authService.loginWithKakao(
+                        new KakaoLoginRequest("code", "verifier", "http://localhost:3000/auth/kakao/callback", "nonce-1")
+                ),
+                BusinessException.class
         );
 
-        Assertions.assertThat(response.accessToken()).isEqualTo("app-jwt-fallback");
-        Assertions.assertThat(response.expiresInSec()).isEqualTo(600L);
+        Assertions.assertThat(ex.getCode()).isEqualTo(401);
+        Assertions.assertThat(ex.getMessage()).contains("id_token");
     }
 
     @Test
