@@ -14,6 +14,26 @@ import { sampleCourses, sampleRides } from '@/lib/sample-data'
 export default function ProfilePage() {
   const { isAuthenticated, logout, user } = useAuth()
   const [authError, setAuthError] = useState<string | null>(null)
+  const [loginErrorMessage] = useState<string | null>(() => {
+    if (typeof window === 'undefined') {
+      return null
+    }
+
+    const loginError = new URLSearchParams(window.location.search).get('loginError')
+    if (!loginError) {
+      return null
+    }
+
+    const predefinedMessages: Record<string, string> = {
+      invalid_response: '카카오 로그인 응답이 올바르지 않습니다.',
+      missing_session: '로그인 세션 정보가 없습니다. 다시 시도해주세요.',
+      invalid_session: '로그인 세션을 읽지 못했습니다. 다시 시도해주세요.',
+      state_mismatch: '로그인 state 검증에 실패했습니다.',
+      network: '로그인 처리 중 네트워크 오류가 발생했습니다.',
+    }
+
+    return predefinedMessages[loginError] || loginError
+  })
   const totalDistance = sampleRides.reduce((sum, ride) => sum + ride.distance, 0)
   const totalTime = sampleRides.reduce((sum, ride) => sum + ride.duration, 0)
   const avgSpeed = sampleRides.reduce((sum, ride) => sum + ride.avgSpeed, 0) / sampleRides.length
@@ -65,7 +85,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {authError && <p className="text-sm text-rose-600">{authError}</p>}
+            {(authError || loginErrorMessage) && <p className="text-sm text-rose-600">{authError || loginErrorMessage}</p>}
 
             {isAuthenticated ? (
               <div className="space-y-2">

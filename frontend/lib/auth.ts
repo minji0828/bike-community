@@ -1,4 +1,5 @@
 const ACCESS_TOKEN_KEY = 'bikeoasis.access_token'
+const ACCESS_TOKEN_COOKIE_KEY = 'bikeoasis.access_token'
 const KAKAO_LOGIN_SESSION_KEY = 'bikeoasis.kakao.login_session'
 const KAKAO_LOGIN_SESSION_COOKIE_KEY = 'bikeoasis.kakao.login_session'
 
@@ -64,7 +65,7 @@ export function getStoredAccessToken() {
   if (!isBrowser()) {
     return null
   }
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY)
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY) || getCookie(ACCESS_TOKEN_COOKIE_KEY)
 }
 
 export function setStoredAccessToken(token: string) {
@@ -72,6 +73,7 @@ export function setStoredAccessToken(token: string) {
     return
   }
   window.localStorage.setItem(ACCESS_TOKEN_KEY, token)
+  setCookie(ACCESS_TOKEN_COOKIE_KEY, token, 60 * 60 * 24 * 7)
 }
 
 export function clearStoredAccessToken() {
@@ -79,6 +81,7 @@ export function clearStoredAccessToken() {
     return
   }
   window.localStorage.removeItem(ACCESS_TOKEN_KEY)
+  clearCookie(ACCESS_TOKEN_COOKIE_KEY)
 }
 
 export function getAuthUserFromToken(token: string | null): AuthUser | null {
