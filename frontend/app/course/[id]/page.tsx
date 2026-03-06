@@ -52,7 +52,8 @@ export default function CourseDetailPage() {
   const [createSuccessMessage, setCreateSuccessMessage] = useState<string | null>(null)
 
   const defaultStartAt = useMemo(() => {
-    const date = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    const date = new Date()
+    date.setDate(date.getDate() + 1)
     date.setMinutes(0, 0, 0)
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
   }, [])
