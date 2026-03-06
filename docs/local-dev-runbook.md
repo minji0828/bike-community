@@ -94,6 +94,10 @@ npm run check
   - 백엔드 의존성 갱신 후 재기동 (`springdoc` 버전 호환 문제였던 경우)
 - 카카오 로그인 후 `허용되지 않은 redirectUri입니다.`
   - 백엔드의 `KAKAO_ALLOWED_REDIRECT_URIS`와 프론트 `.env.local`의 redirect URI가 정확히 일치하는지 확인
+- 카카오 로그인 화면에서 `앱 관리자 설정 오류 (KOE004)`
+  - 카카오 개발자 콘솔에서 해당 앱의 **카카오 로그인 활성화**를 켰는지 확인
+  - 플랫폼(Web) 도메인에 `http://localhost:3000` 이 등록됐는지 확인
+  - Redirect URI에 `http://localhost:3000/auth/kakao/callback` 이 등록됐는지 확인
 - 카카오 지도가 계속 빈 화면 / SDK 로드 실패
   - `NEXT_PUBLIC_KAKAO_MAP_JS_KEY`에 JavaScript 키를 넣었는지 확인
   - 카카오 콘솔 웹 도메인에 `http://localhost:3000` 이 등록됐는지 확인

@@ -388,6 +388,9 @@ public class CourseService {
         if (value == null || value.isBlank()) {
             return CourseSourceType.UGC;
         }
+        if ("RIDING".equalsIgnoreCase(value)) {
+            return CourseSourceType.UGC;
+        }
         try {
             return CourseSourceType.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {

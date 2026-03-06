@@ -193,7 +193,7 @@ export default function RidePage() {
         ridingId: riding.ridingId,
         title,
         visibility: 'PUBLIC',
-        sourceType: 'RIDING',
+        sourceType: 'UGC',
         description: '내 라이딩 기록으로 만든 코스',
         tags: ['라이딩기록', '자동생성'],
       })
