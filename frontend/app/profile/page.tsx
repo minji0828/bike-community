@@ -69,7 +69,7 @@ export default function ProfilePage() {
                 </p>
               </div>
               <div className={`rounded-full px-3 py-1 text-xs font-medium ${isAuthenticated ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-muted-foreground'}`}>
-                {isAuthenticated ? '로그인됨' : isLoading ? '확인 중' : '비로그인'}
+                {isAuthenticated ? '로그인됨' : '비로그인'}
               </div>
             </div>
 
@@ -89,7 +89,7 @@ export default function ProfilePage() {
                 className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]"
                 onClick={handleKakaoLogin}
               >
-                {isLoading ? '카카오 로그인 준비 중...' : '카카오로 로그인'}
+                카카오로 로그인
               </Button>
             )}
           </CardContent>
