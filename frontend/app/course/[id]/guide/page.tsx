@@ -1,7 +1,8 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { X, Play, Pause, AlertTriangle, MapPin, Navigation } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,8 +11,10 @@ import { MapView } from '@/components/map-view'
 import { getCourseDetail, toCourseDetailModel } from '@/lib/courses'
 import { sampleCourses } from '@/lib/sample-data'
 
-export default function GuidePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function GuidePage() {
+  const routeParams = useParams()
+  const idParam = routeParams?.id
+  const id = typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? idParam[0] : ''
   const courseId = Number(id)
   const [course, setCourse] = useState(sampleCourses.find((c) => c.id === id) || sampleCourses[0])
 

@@ -20,10 +20,11 @@ export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://loc
 
 type ApiFetchOptions = RequestInit & {
   token?: string | null
+  timeoutMs?: number
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
-  const { token, headers, ...rest } = options
+  const { token, headers, timeoutMs = 15000, signal, ...rest } = options
   const requestHeaders = new Headers(headers)
 
   if (!requestHeaders.has('Content-Type') && rest.body) {
@@ -38,10 +39,34 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
     requestHeaders.set('Authorization', `Bearer ${token}`)
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...rest,
-    headers: requestHeaders,
-  })
+  const controller = new AbortController()
+  const timeoutId = globalThis.setTimeout(() => controller.abort('timeout'), timeoutMs)
+
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort(signal.reason)
+    } else {
+      signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true })
+    }
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...rest,
+      headers: requestHeaders,
+      signal: controller.signal,
+    })
+  } catch (error) {
+    globalThis.clearTimeout(timeoutId)
+
+    if (controller.signal.aborted) {
+      throw new ApiError('요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.', 408)
+    }
+
+    throw new ApiError('서버에 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.', 0)
+  }
+  globalThis.clearTimeout(timeoutId)
 
   let payload: ApiEnvelope<T> | null = null
   const text = await response.text()

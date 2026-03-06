@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LoaderCircle } from 'lucide-react'
@@ -12,6 +12,7 @@ function KakaoCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { completeKakaoLogin } = useAuth()
+  const lastAttemptRef = useRef<string | null>(null)
   const code = searchParams.get('code')
   const state = searchParams.get('state')
   const error = searchParams.get('error')
@@ -31,6 +32,12 @@ function KakaoCallbackContent() {
     if (syncErrorMessage || !code || !state) {
       return
     }
+
+    const attemptKey = `${code}:${state}`
+    if (lastAttemptRef.current === attemptKey) {
+      return
+    }
+    lastAttemptRef.current = attemptKey
 
     completeKakaoLogin({ code, state })
       .then(() => {

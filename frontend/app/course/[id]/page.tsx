@@ -1,8 +1,8 @@
 'use client'
 
-import { use, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar, Clock, MessageCircle, Plus, Route, MapPin, Navigation, Heart, Users } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { Button } from '@/components/ui/button'
@@ -34,12 +34,14 @@ const poiTypeLabels = {
   cafe: '카페',
 }
 
-export default function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function CourseDetailPage() {
+  const routeParams = useParams()
+  const idParam = routeParams?.id
+  const id = typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? idParam[0] : ''
   const router = useRouter()
   const courseId = Number(id)
   const { isAuthenticated, token } = useAuth()
-  const [course, setCourse] = useState(sampleCourses.find((c) => c.id === id) || sampleCourses[0])
+  const [course, setCourse] = useState(() => sampleCourses.find((c) => c.id === id) || sampleCourses[0])
   const [courseLoading, setCourseLoading] = useState(Number.isFinite(courseId))
   const [meetups, setMeetups] = useState<CourseMeetup[]>([])
   const [meetupsLoading, setMeetupsLoading] = useState(true)
@@ -71,6 +73,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       return
     }
 
+    setCourseLoading(true)
     getCourseDetail(courseId)
       .then((response) => {
         setCourse(toCourseDetailModel(response))

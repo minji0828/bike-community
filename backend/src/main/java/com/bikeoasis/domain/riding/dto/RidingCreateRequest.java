@@ -1,5 +1,6 @@
 package com.bikeoasis.domain.riding.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.util.List;
@@ -19,6 +20,7 @@ public class RidingCreateRequest {
     @NoArgsConstructor
     public static class PointDto {
         public double lat;
+        @JsonAlias("lng")
         public double lon;
     }
 }

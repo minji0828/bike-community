@@ -1,7 +1,8 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { MeetupChat } from '@/components/chat/meetup-chat'
@@ -9,8 +10,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getMeetup, type CourseMeetup } from '@/lib/meetups'
 
-export default function MeetupChatPage({ params }: { params: Promise<{ meetupId: string }> }) {
-  const { meetupId } = use(params)
+export default function MeetupChatPage() {
+  const routeParams = useParams()
+  const meetupIdParam = routeParams?.meetupId
+  const meetupId = typeof meetupIdParam === 'string' ? meetupIdParam : Array.isArray(meetupIdParam) ? meetupIdParam[0] : ''
   const parsedMeetupId = Number(meetupId)
   const { token, isAuthenticated } = useAuth()
   const [meetup, setMeetup] = useState<CourseMeetup | null>(null)

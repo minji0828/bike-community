@@ -20,7 +20,7 @@ type RidePoint = GeoPoint & {
 
 export default function RidePage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const watchIdRef = useRef<number | null>(null)
   const [rideState, setRideState] = useState<RideState>('idle')
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -29,6 +29,13 @@ export default function RidePage() {
   const [currentLocation, setCurrentLocation] = useState<GeoPoint | null>(null)
   const [rideError, setRideError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const numericUserId = useMemo(() => {
+    if (!user?.userId) {
+      return undefined
+    }
+    const parsed = Number(user.userId)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }, [user?.userId])
 
   useEffect(() => {
     if (rideState !== 'recording') {
@@ -178,7 +185,7 @@ export default function RidePage() {
 
       const riding = await createRiding({
         deviceUuid: getOrCreateDeviceUuid(),
-        userId: user?.userId ? Number(user.userId) : undefined,
+        userId: numericUserId,
         title,
         totalDistance: Number(distance.toFixed(3)),
         totalTime: elapsedTime,
@@ -187,7 +194,7 @@ export default function RidePage() {
           lat: point.lat,
           lon: point.lng,
         })),
-      })
+      }, token)
 
       const course = await createCourseFromRiding({
         ridingId: riding.ridingId,
@@ -196,7 +203,7 @@ export default function RidePage() {
         sourceType: 'UGC',
         description: '내 라이딩 기록으로 만든 코스',
         tags: ['라이딩기록', '자동생성'],
-      })
+      }, token)
 
       resetRide()
       router.push(`/course/${course.courseId}`)

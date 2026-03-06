@@ -17,7 +17,9 @@ declare global {
           setCenter: (latLng: unknown) => void
           relayout: () => void
         }
-        Marker: new (options: { map: unknown; position: unknown; title?: string }) => unknown
+        Marker: new (options: { map: unknown; position: unknown; title?: string }) => {
+          setMap: (map: unknown | null) => void
+        }
         Polyline: new (options: {
           map: unknown
           path: unknown[]
@@ -25,7 +27,9 @@ declare global {
           strokeColor?: string
           strokeOpacity?: number
           strokeStyle?: string
-        }) => unknown
+        }) => {
+          setMap: (map: unknown | null) => void
+        }
         LatLngBounds: new () => {
           extend: (latLng: unknown) => void
         }

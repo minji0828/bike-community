@@ -24,16 +24,18 @@ export type CreateCourseFromRidingRequest = {
   tags?: string[]
 }
 
-export async function createRiding(request: CreateRidingRequest) {
+export async function createRiding(request: CreateRidingRequest, token?: string | null) {
   return apiFetch<{ ridingId: number }>('/api/v1/ridings', {
     method: 'POST',
+    token,
     body: JSON.stringify(request),
   })
 }
 
-export async function createCourseFromRiding(request: CreateCourseFromRidingRequest) {
+export async function createCourseFromRiding(request: CreateCourseFromRidingRequest, token?: string | null) {
   return apiFetch<{ courseId: number }>('/api/v1/courses/from-riding', {
     method: 'POST',
+    token,
     body: JSON.stringify(request),
   })
 }

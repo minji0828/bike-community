@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CourseService {
 
+    private static final int SRID_WGS84 = 4326;
     private static final double LOOP_THRESHOLD_KM = 0.1;
     private static final double DEFAULT_AVG_SPEED_KMH = 15.0;
     private static final int MAX_GPX_XML_CHARS = 5_000_000;
@@ -118,6 +119,7 @@ public class CourseService {
 
         Coordinate[] coordinates = coordinateList.toArray(Coordinate[]::new);
         LineString lineString = geometryFactory.createLineString(coordinates);
+        lineString.setSRID(SRID_WGS84);
         Bbox bbox = computeBbox(coordinates);
         double distanceKm = computeDistanceKm(coordinates);
         boolean loop = computeLoop(coordinates);
@@ -167,6 +169,7 @@ public class CourseService {
 
         Coordinate[] coordinates = riding.getPathData().getCoordinates();
         LineString lineString = geometryFactory.createLineString(coordinates);
+        lineString.setSRID(SRID_WGS84);
         Bbox bbox = computeBbox(coordinates);
         double distanceKm = computeDistanceKm(coordinates);
         boolean loop = computeLoop(coordinates);
@@ -329,6 +332,7 @@ public class CourseService {
 
         Coordinate[] coordinates = coordinateList.toArray(Coordinate[]::new);
         LineString lineString = geometryFactory.createLineString(coordinates);
+        lineString.setSRID(SRID_WGS84);
         Bbox bbox = computeBbox(coordinates);
         double distanceKm = computeDistanceKm(coordinates);
         boolean loop = computeLoop(coordinates);
@@ -370,7 +374,9 @@ public class CourseService {
         Coordinate[] coordinates = points.stream()
                 .map(p -> new Coordinate(p.getLon(), p.getLat()))
                 .toArray(Coordinate[]::new);
-        return geometryFactory.createLineString(coordinates);
+        LineString lineString = geometryFactory.createLineString(coordinates);
+        lineString.setSRID(SRID_WGS84);
+        return lineString;
     }
 
     private CourseVisibility parseVisibility(String value) {
@@ -470,7 +476,9 @@ public class CourseService {
         if (lat == null || lon == null) {
             return null;
         }
-        return geometryFactory.createPoint(new Coordinate(lon, lat));
+        Point point = geometryFactory.createPoint(new Coordinate(lon, lat));
+        point.setSRID(SRID_WGS84);
+        return point;
     }
 
     private String generateUniqueShareId() {
