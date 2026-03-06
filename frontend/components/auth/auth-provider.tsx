@@ -22,6 +22,12 @@ type AuthMeResponse = {
   provider?: string | null
 }
 
+type ApiEnvelope<T> = {
+  code: number
+  message: string
+  data: T | null
+}
+
 type AuthContextValue = {
   token: string | null
   user: AuthUser | null
@@ -59,9 +65,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthError(null)
 
       try {
-        const profile = await apiFetch<AuthMeResponse>('/api/auth/me', {
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          headers: {
+            Accept: 'application/json',
+          },
           cache: 'no-store',
+          credentials: 'same-origin',
         })
+
+        const payload = (await response.json()) as ApiEnvelope<AuthMeResponse>
+        if (!response.ok || !payload?.data) {
+          throw new Error(payload?.message || 'auth_me_failed')
+        }
+
+        const profile = payload.data
 
         setUser({
           userId: String(profile.userId),
