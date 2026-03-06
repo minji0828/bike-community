@@ -23,8 +23,9 @@ function KakaoCallbackContent() {
       ? '카카오 로그인 응답이 올바르지 않습니다.'
       : null
   const [asyncErrorMessage, setAsyncErrorMessage] = useState<string | null>(null)
+  const [statusMessage, setStatusMessage] = useState('카카오 로그인 정보를 확인하고 있어요...')
   const status: 'loading' | 'error' = syncErrorMessage || asyncErrorMessage ? 'error' : 'loading'
-  const message = syncErrorMessage || asyncErrorMessage || '카카오 로그인 정보를 확인하고 있어요...'
+  const message = syncErrorMessage || asyncErrorMessage || statusMessage
 
   useEffect(() => {
     let isMounted = true
@@ -39,22 +40,40 @@ function KakaoCallbackContent() {
     }
     lastAttemptRef.current = attemptKey
 
+    const progressTimer = window.setTimeout(() => {
+      if (isMounted) {
+        setStatusMessage('로그인 승인 후 서버에서 계정을 연결하는 중이에요...')
+      }
+    }, 3000)
+
+    const failSafeTimer = window.setTimeout(() => {
+      if (isMounted) {
+        setAsyncErrorMessage('로그인 처리가 지연되고 있어요. 잠시 후 다시 시도해주세요.')
+      }
+    }, 15000)
+
     completeKakaoLogin({ code, state })
       .then(() => {
         if (!isMounted) {
           return
         }
+        window.clearTimeout(progressTimer)
+        window.clearTimeout(failSafeTimer)
         router.replace('/profile?login=success')
       })
       .catch((loginError) => {
         if (!isMounted) {
           return
         }
+        window.clearTimeout(progressTimer)
+        window.clearTimeout(failSafeTimer)
         setAsyncErrorMessage(loginError instanceof Error ? loginError.message : '로그인 처리에 실패했습니다.')
       })
 
     return () => {
       isMounted = false
+      window.clearTimeout(progressTimer)
+      window.clearTimeout(failSafeTimer)
     }
   }, [code, completeKakaoLogin, router, state, syncErrorMessage])
 

@@ -2,6 +2,7 @@ package com.bikeoasis.global.config;
 
 import com.bikeoasis.global.error.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -16,6 +17,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.web.client.RestOperations;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -68,9 +70,17 @@ public class JwtConfig {
     public JwtDecoder kakaoIdTokenDecoder(
             @Value("${kakao.oauth.jwk-set-uri:https://kauth.kakao.com/.well-known/jwks.json}") String jwkSetUri,
             @Value("${kakao.oauth.issuer:https://kauth.kakao.com}") String issuer,
-            @Value("${kakao.oauth.client-id:}") String clientId
+            @Value("${kakao.oauth.client-id:}") String clientId,
+            RestTemplateBuilder restTemplateBuilder
     ) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        RestOperations restOperations = restTemplateBuilder
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(10))
+                .build();
+
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+                .restOperations(restOperations)
+                .build();
         OAuth2TokenValidator<Jwt> issuerValidator = new JwtIssuerValidator(issuer);
         OAuth2TokenValidator<Jwt> timestampValidator = new JwtTimestampValidator(Duration.ofSeconds(60));
         OAuth2TokenValidator<Jwt> kakaoSpecificValidator = jwt -> {
