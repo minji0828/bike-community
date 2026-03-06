@@ -1,0 +1,26 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    # backend/docker-compose.local.yml 기본 값과 맞춘다.
+    url: jdbc:postgresql://localhost:15432/bikeoasis
+    username: postgres
+    password: postgres
+
+# 로컬 개발 편의용 설정 (운영에서는 반드시 APP_JWT_SECRET 환경변수로 주입)
+app:
+  jwt:
+    # 최소 32바이트 이상 필요(JwtConfig 검증)
+    secret: dev-local-jwt-secret-dev-local-jwt-secret
+
+# 로컬에서 외부 API/파일 의존으로 부팅이 지연/실패하는 것을 방지
+poi:
+  fetch:
+    onstartup: false
+
+course:
+  seed:
+    gpx:
+      onstartup: false
