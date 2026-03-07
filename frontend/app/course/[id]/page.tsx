@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar, Clock, MessageCircle, Plus, Route, MapPin, Navigation, Heart, Users } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
+import { CourseCollectionSheet } from '@/components/collection/course-collection-sheet'
+import { HighlightForm } from '@/components/highlight/highlight-form'
+import { HighlightList } from '@/components/highlight/highlight-list'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MapView } from '@/components/map-view'
 import { getCourseDetail, toCourseDetailModel } from '@/lib/courses'
+import { createCourseHighlight, listCourseHighlights, type CourseHighlight } from '@/lib/highlights'
 import { createCourseMeetup, joinMeetup, leaveMeetup, listCourseMeetups, type CourseMeetup } from '@/lib/meetups'
 import { sampleCourses } from '@/lib/sample-data'
 
@@ -34,6 +38,16 @@ const poiTypeLabels = {
   cafe: '카페',
 }
 
+const highlightPoiTypeMap = {
+  viewpoint: 'rest',
+  restroom: 'toilet',
+  water: 'water',
+  cafe: 'cafe',
+  danger: 'rest',
+  photo: 'rest',
+  note: 'rest',
+} as const
+
 export default function CourseDetailPage() {
   const routeParams = useParams()
   const idParam = routeParams?.id
@@ -43,6 +57,10 @@ export default function CourseDetailPage() {
   const { isAuthenticated, token } = useAuth()
   const [course, setCourse] = useState(() => sampleCourses.find((c) => c.id === id) || sampleCourses[0])
   const [courseLoading, setCourseLoading] = useState(Number.isFinite(courseId))
+  const [highlights, setHighlights] = useState<CourseHighlight[]>([])
+  const [highlightsLoading, setHighlightsLoading] = useState(Number.isFinite(courseId))
+  const [highlightsError, setHighlightsError] = useState<string | null>(null)
+  const [highlightSubmitting, setHighlightSubmitting] = useState(false)
   const [meetups, setMeetups] = useState<CourseMeetup[]>([])
   const [meetupsLoading, setMeetupsLoading] = useState(true)
   const [meetupsError, setMeetupsError] = useState<string | null>(null)
@@ -88,6 +106,28 @@ export default function CourseDetailPage() {
         setCourseLoading(false)
       })
   }, [courseId, id])
+
+  useEffect(() => {
+    if (!Number.isFinite(courseId)) {
+      setHighlightsLoading(false)
+      setHighlightsError('하이라이트를 조회할 수 없는 코스입니다.')
+      return
+    }
+
+    setHighlightsLoading(true)
+    listCourseHighlights(courseId, token)
+      .then((response) => {
+        setHighlights(response)
+        setHighlightsError(null)
+      })
+      .catch((error) => {
+        setHighlights([])
+        setHighlightsError(error instanceof Error ? error.message : '하이라이트를 불러오지 못했습니다.')
+      })
+      .finally(() => {
+        setHighlightsLoading(false)
+      })
+  }, [courseId, token])
 
   useEffect(() => {
     setCreateForm({
@@ -164,6 +204,22 @@ export default function CourseDetailPage() {
     }
   }
 
+  const highlightPois = useMemo(
+    () =>
+      highlights
+        .filter((highlight) => highlight.lat != null && highlight.lon != null)
+        .map((highlight) => ({
+          id: `highlight-${highlight.highlightId}`,
+          type: highlightPoiTypeMap[highlight.type as keyof typeof highlightPoiTypeMap] ?? 'rest',
+          name: highlight.title || '라이더 하이라이트',
+          lat: highlight.lat as number,
+          lng: highlight.lon as number,
+        })),
+    [highlights]
+  )
+
+  const mapPois = useMemo(() => [...course.pois, ...highlightPois], [course.pois, highlightPois])
+
   const handleJoin = async (meetupId: number) => {
     if (!token) {
       setMeetupsError('로그인 후 코스모임에 참가할 수 있습니다.')
@@ -198,6 +254,29 @@ export default function CourseDetailPage() {
     }
   }
 
+  const handleCreateHighlight = async (request: {
+    type: 'viewpoint' | 'restroom' | 'water' | 'cafe' | 'danger' | 'photo' | 'note'
+    title?: string
+    note?: string
+    lat: number
+    lon: number
+    visibility?: 'public' | 'private'
+  }) => {
+    if (!token) {
+      throw new Error('로그인 후 하이라이트를 남길 수 있습니다.')
+    }
+
+    try {
+      setHighlightSubmitting(true)
+      setHighlightsError(null)
+      await createCourseHighlight(courseId, request, token)
+      const refreshed = await listCourseHighlights(courseId, token)
+      setHighlights(refreshed)
+    } finally {
+      setHighlightSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-lg">
@@ -229,7 +308,7 @@ export default function CourseDetailPage() {
               className="h-64 rounded-2xl border border-border bg-card"
               showRoute
               routePath={course.path}
-              pois={course.pois}
+              pois={mapPois}
               showCurrentLocation={false}
               fitBoundsPadding={{ top: 96, right: 24, bottom: 36, left: 24 }}
             />
@@ -258,6 +337,53 @@ export default function CourseDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          <section className="mb-8">
+            <div className="mb-3">
+              <h3 className="font-semibold text-foreground">여행 컬렉션</h3>
+              <p className="text-sm text-muted-foreground">이 코스를 주말 여행/장거리 투어 컬렉션에 묶어두고 일정 메모를 쌓을 수 있어요.</p>
+            </div>
+            <CourseCollectionSheet courseId={courseId} token={token} isAuthenticated={isAuthenticated} />
+          </section>
+
+          <section className="mb-8">
+            <div className="mb-3">
+              <h3 className="font-semibold text-foreground">라이더 하이라이트</h3>
+              <p className="text-sm text-muted-foreground">전망, 보급, 카페, 주의 구간 같은 현장 포인트를 모아둔 메모예요.</p>
+            </div>
+
+            {highlightsError && <p className="mb-3 text-sm text-rose-600">{highlightsError}</p>}
+
+            {highlightsLoading ? (
+              <Card>
+                <CardContent className="p-4 text-sm text-muted-foreground">하이라이트를 불러오는 중...</CardContent>
+              </Card>
+            ) : (
+              <HighlightList highlights={highlights} />
+            )}
+
+            <div className="mt-3">
+              {isAuthenticated ? (
+                <HighlightForm
+                  defaultLat={course.path[0]?.lat}
+                  defaultLon={course.path[0]?.lng}
+                  onSubmit={handleCreateHighlight}
+                  isSubmitting={highlightSubmitting}
+                />
+              ) : (
+                <Card className="border-dashed">
+                  <CardContent className="space-y-3 p-4 text-sm text-muted-foreground">
+                    <p>하이라이트 작성은 로그인 후 사용할 수 있어요.</p>
+                    <Link href="/profile">
+                      <Button variant="outline" className="w-full rounded-full">
+                        프로필에서 로그인하기
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </section>
 
           <section>
             <h3 className="mb-3 font-semibold text-foreground">경로 주변 시설</h3>

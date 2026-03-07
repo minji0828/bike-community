@@ -27,8 +27,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/comments").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/share").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/meetups").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/highlights").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/comments/*").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/comments/*/reports").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/collections").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/collections/*/items").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/meetups/*/join").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/meetups/*/leave").authenticated()
                         .requestMatchers("/ws-stomp/**").permitAll()
@@ -49,4 +52,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-

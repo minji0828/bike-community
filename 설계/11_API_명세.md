@@ -379,6 +379,152 @@ Response:
 - 운영 기본: S3 본문 저장 + DB(`gpx_object_key`) 참조
 - API 계약(Response shape)은 동일하게 유지한다.
 
+### 4.8 여행 컬렉션 생성/조회
+
+- POST `/api/v1/collections`
+- GET `/api/v1/collections?mine={boolean}`
+- GET `/api/v1/collections/{collectionId}`
+- POST `/api/v1/collections/{collectionId}/items`
+
+용도:
+
+- 여러 코스를 주말 투어/여행 계획 단위로 묶어 저장한다.
+- `mine=true`는 로그인 사용자 소유 컬렉션만 조회한다.
+- `mine=false`(기본값)는 공개(`public`) 컬렉션만 조회한다.
+
+Request (`POST /api/v1/collections`)
+
+```json
+{
+  "title": "주말 남한강 투어",
+  "description": "토요일 오전 코스만 묶어둔 여행 컬렉션",
+  "region": "남한강",
+  "tripNotes": "보급 포인트와 숙소 후보 정리",
+  "visibility": "private"
+}
+```
+
+Response
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "collectionId": 1
+  }
+}
+```
+
+Request (`POST /api/v1/collections/{collectionId}/items`)
+
+```json
+{
+  "courseId": 10,
+  "positionIndex": 0
+}
+```
+
+Response (`GET /api/v1/collections/{collectionId}`)
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "collectionId": 1,
+    "ownerUserId": 1,
+    "title": "주말 남한강 투어",
+    "description": "토요일 오전 코스만 묶어둔 여행 컬렉션",
+    "region": "남한강",
+    "tripNotes": "보급 포인트와 숙소 후보 정리",
+    "visibility": "private",
+    "itemCount": 1,
+    "items": [
+      {
+        "itemId": 1,
+        "courseId": 10,
+        "courseTitle": "동부5고개",
+        "distanceKm": 68.9,
+        "estimatedDurationMin": 276,
+        "positionIndex": 0
+      }
+    ],
+    "createdAt": "2026-03-07T19:43:35",
+    "updatedAt": "2026-03-07T19:43:48",
+    "mine": true
+  }
+}
+```
+
+정책:
+
+- 생성/코스 추가는 Bearer JWT 필요
+- private 컬렉션 상세는 소유자만 접근 가능
+- 현재 Phase 1에서는 공동 편집자 없이 소유자 1인 모델로 시작한다
+
+### 4.9 코스 하이라이트 생성/조회
+
+- GET `/api/v1/courses/{courseId}/highlights`
+- POST `/api/v1/courses/{courseId}/highlights`
+
+용도:
+
+- 코스 위에 전망, 보급, 위험, 사진 포인트 같은 현장 메모를 남긴다.
+
+Request (`POST /api/v1/courses/{courseId}/highlights`)
+
+```json
+{
+  "type": "viewpoint",
+  "title": "강 전망",
+  "note": "휴식하기 좋음",
+  "lat": 37.5665,
+  "lon": 126.978,
+  "visibility": "public"
+}
+```
+
+Response
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": "1"
+}
+```
+
+Response (`GET /api/v1/courses/{courseId}/highlights`)
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "highlightId": 1,
+      "courseId": 10,
+      "type": "viewpoint",
+      "title": "강 전망",
+      "note": "휴식하기 좋음",
+      "visibility": "public",
+      "lat": 37.5665,
+      "lon": 126.978,
+      "authorUserId": 1,
+      "mine": false,
+      "createdAt": "2026-03-07T19:43:48"
+    }
+  ]
+}
+```
+
+정책:
+
+- 조회는 공개 하이라이트 + 본인 private 하이라이트를 함께 반환한다.
+- 작성은 Bearer JWT 필요
+- 현재 Phase 1에서는 신고/숨김/운영 moderation은 후속 단계로 둔다.
+
 ## 5. Meetup API(MVP3 착수)
 
 - 상세 설계: `설계/22_MVP3_모임_채팅_설계.md`
