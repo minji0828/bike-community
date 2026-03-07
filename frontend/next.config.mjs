@@ -32,6 +32,18 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  webpack(config, { dev }) {
+    if (dev) {
+      config.cache = false
+      config.watchOptions = {
+        ...config.watchOptions,
+        poll: 1000,
+        aggregateTimeout: 300,
+      }
+    }
+
+    return config
+  },
   turbopack: {
     root: __dirname,
   },
