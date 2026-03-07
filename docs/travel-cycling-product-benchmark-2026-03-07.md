@@ -1,0 +1,175 @@
+# BikeOasis 확장 기능 벤치마크 (2026-03-07)
+
+- 작성일: 2026-03-07
+- 목적: 현재 BikeOasis가 "코스 보기/기록/공유/모임" 수준에서 한 단계 더 올라가기 위해, 러닝/라이딩/아웃도어 서비스의 검증된 기능 패턴을 제품 기획으로 번역한다.
+
+## 1. 조사 범위
+
+- Strava
+- komoot
+- AllTrails
+- Ride with GPS
+- Garmin
+- Nike Run Club
+
+## 2. 공통적으로 보이는 제품 패턴
+
+### 2.1 코스를 "경로 파일"이 아니라 "여행 단위 콘텐츠"로 묶는다
+- komoot는 `Collections`와 `Highlights`를 통해 여러 경로/포인트를 스토리처럼 묶는다.
+- Ride with GPS는 단순 경로 외에 이벤트/오거나이즈된 라이딩 경험 단위를 강조한다.
+- 시사점:
+  - BikeOasis도 코스 1개 상세를 넘어서
+    - 여러 코스를 묶는 `Trip Collection`
+    - 여행 일정/추천 순서/필수 포인트
+    로 확장해야 여행 도메인 포지셔닝이 강해진다.
+
+### 2.2 실주행 중에는 "안내"보다 "안심"이 더 중요하다
+- Strava Beacon, AllTrails Live Share, Garmin LiveTrack은 실시간 위치 공유/안심 기능을 전면에 둔다.
+- AllTrails는 wrong-turn alerts처럼 "길에서 이탈했는지"를 빠르게 알려준다.
+- 시사점:
+  - BikeOasis는 이미 off-route 감지가 있으므로,
+    - 라이브 공유
+    - ETA/배터리/마지막 위치 공유
+    - 만료형 안전 링크
+    를 얹으면 차별화보다 실사용 가치가 커진다.
+
+### 2.3 사용자 생성 POI/팁/후기가 경로 신뢰도를 만든다
+- komoot Highlights/Saved Places, AllTrails trail conditions/reviews는 "사람이 남긴 현장성"을 핵심 자산으로 쓴다.
+- 시사점:
+  - BikeOasis의 경로 주변 편의시설은 현재 DB 중심이지만,
+    - 휴식 포인트
+    - 포토 스팟
+    - 노면/공사/주의 메모
+    - 화장실 실제 사용 후기
+    를 붙이면 코스의 품질이 살아난다.
+
+### 2.4 장기 리텐션은 기록 자체보다 목표/챌린지/완주 단위에서 나온다
+- Strava/Nike Run Club 계열은 챌린지, 스티커, 완주 기록, 목표 달성 구조가 강하다.
+- 시사점:
+  - BikeOasis도 단순 라이딩 저장만으로는 재방문 동기가 약하다.
+  - 여행형 서비스에 맞게
+    - 컬렉션 완주 배지
+    - 지역/테마 챌린지
+    - 모임 완주 기록
+    이 필요하다.
+
+### 2.5 오프라인/패키지형 준비성이 여행형 사용성의 핵심이다
+- AllTrails/Ride with GPS/komoot는 다운로드/오프라인 탐색/패키지형 안내를 강하게 제공한다.
+- 시사점:
+  - BikeOasis도 최소한
+    - 코스 geometry
+    - 핵심 POI
+    - 경고/하이라이트
+    - 집결 정보
+    를 묶은 `Route Package` 개념이 필요하다.
+
+## 3. BikeOasis에 바로 맞는 우선 기능 제안
+
+### P0. Trip Collection (최우선)
+- 여러 코스를 하나의 여행/주말 라이딩 계획으로 묶기
+- 추천 순서, 총 거리, 예상 기간, 난이도, 대표 포인트 제공
+- 기대 효과:
+  - 여행 도메인 정당성 강화
+  - GPX seed 코스 자산화
+  - 공유/모임/채팅의 이유 강화
+
+### P1. Highlights & Crew Notes
+- 코스 위 특정 지점에
+  - 추천 포인트
+  - 위험/노면 메모
+  - 화장실/카페 후기
+  - 포토 스팟
+  기록
+- 기대 효과:
+  - POI 데이터만으로 부족한 현장성 보완
+  - 코스 신뢰도/품질 증가
+
+### P2. Safety Live Share
+- 라이딩 중 가족/동행에게
+  - 현재 위치
+  - 계획 코스
+  - ETA
+  - 마지막 갱신 시각
+  - 배터리/신호 상태(가능 시)
+  공유
+- 기대 효과:
+  - 여행/장거리/야간 주행 가치 상승
+  - 모임 기능과 강하게 결합
+
+### P3. Route Package / Offline Ready
+- 저장 가능한 여행 패키지
+  - 코스 경로
+  - 핵심 POI
+  - 하이라이트/경고
+  - 모임 집결 정보
+- 기대 효과:
+  - 여행/지역 탐방형 UX 강화
+  - 네트워크 불안 상황 대응
+
+### P4. Collection Complete / Challenge
+- 지역/테마 컬렉션 완주, 모임 완주, 월간 주제 챌린지
+- 기대 효과:
+  - 리텐션 강화
+  - 공유 이유 증가
+
+## 4. 추천 로드맵 해석
+
+### 지금 당장 넣으면 좋은 것
+1. Trip Collection
+2. Highlights & Crew Notes
+3. Safety Live Share
+
+### 코어 안정화 후 넣을 것
+4. Route Package / Offline Ready
+5. Collection Complete / Challenge
+
+## 5. 기능 묶음 기준
+
+### 묶음 A. 여행 계획
+- Trip Collection
+- Saved Place / Highlight
+- 일정/집결/숙소/휴식 포인트 메모
+
+### 묶음 B. 실제 주행
+- Follow L2 개선
+- Offline package
+- Live Share
+- Wrong-turn / 재접속 / 배터리 경고
+
+### 묶음 C. 여행 이후/리텐션
+- 후기/컨디션/현장 팁
+- 완주 스탬프/챌린지
+- 모임 완료 기록
+
+## 6. 핵심 정책 포인트
+
+- Live Share는 `public` 기본 금지, 만료형 링크 기본
+- Highlight/후기는 신고/숨김/신뢰등급 정책 필수
+- Trip Collection은 개인/비공개/링크공유/공개 범위 분리
+- Challenge는 속도 경쟁보다 `완주/탐방/기록` 중심으로 설계
+
+## 7. 참고 소스 (공식 페이지 중심)
+
+- Strava Beacon / Routes / Clubs:
+  - https://www.strava.com/features/beacon
+  - https://www.strava.com/features/routes
+  - https://support.strava.com/hc/en-us/articles/216918657-Strava-Clubs
+- komoot Collections / Highlights / Saved Places:
+  - https://www.komoot.com/collections
+  - https://support.komoot.com/hc/en-us/articles/360023434851-Highlights-on-komoot
+  - https://support.komoot.com/hc/en-us/articles/4409605924114-Saved-Places
+- AllTrails wrong-turn alerts / custom maps / Live Share / trail conditions:
+  - https://support.alltrails.com/hc/en-us/articles/360021507931-Wrong-turn-alerts
+  - https://support.alltrails.com/hc/en-us/articles/4410186353812-Custom-maps
+  - https://support.alltrails.com/hc/en-us/articles/360058756571-Live-Share
+  - https://support.alltrails.com/hc/en-us/articles/360019245771-Trail-conditions
+- Ride with GPS events / offline / POI-cue workflow:
+  - https://support.ridewithgps.com/hc/en-us/articles/4419012245147-Events-Overview
+  - https://support.ridewithgps.com/hc/en-us/articles/4419016519835-Offline-Routes
+  - https://support.ridewithgps.com/hc/en-us/articles/4409692953499-Points-of-Interest
+- Garmin LiveTrack / GroupTrack / incident detection:
+  - https://support.garmin.com/en-US/?faq=HbqxxbiBGA3mDhlLX4GUw8
+  - https://support.garmin.com/en-US/?faq=O0j9BgSeT49xG5mDH2HqF7
+  - https://support.garmin.com/en-US/?faq=RfaXahBWkH8Q7pVFLsuUmA
+- Nike Run Club guided runs / plans:
+  - https://www.nike.com/nrc-app

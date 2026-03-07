@@ -179,12 +179,25 @@ MVP 정책: 경고는 "참고" 정보로 제공하며, 완전성을 보장하지
 - 코스 생성/업로드 후: 비동기(워커/배치)로 `amenitiesSummary` 산출
 - POI 동기화 후: "전체 재계산"은 비용이 크므로, 우선 featured/최근 코스부터 재계산
 
+### E6. 상품성 강화 후보(vNext)
+
+- `Trip Collection`: 코스 여러 개를 여행/주말 일정으로 묶는 상위 콘텐츠
+- `Highlights & Crew Notes`: 코스 위 포인트/팁/주의사항을 좌표 기반으로 기록
+- `Safety Live Share`: 실시간 위치/ETA/최근 상태를 만료형 링크로 공유
+- `Route Package`: geometry + 핵심 POI + warnings를 오프라인 대비 패키지로 저장
+- `Collection Complete / Challenge`: 완주/탐방 중심 리텐션 기능
+
+메모:
+- 상세 우선순위와 이유는 `설계/25_기능확장_성장전략.md`를 따른다.
+- 시장 벤치마크는 `docs/travel-cycling-product-benchmark-2026-03-07.md`를 참조한다.
+
 ## 7. Out of Scope (이번 MVP에서 제외)
 
 - 회원가입/로그인 완성형(토큰/리프레시/소셜 로그인)
 - 신고/차단/모더레이션
 - 코스 검색/정렬/랭킹(인기 코스)
 - 자연어 기반 추천 에이전트(LLM UI)
+- Trip Collection / Highlight / Live Share / Challenge의 완성형 기능
 - 코스 편집 히스토리/버저닝
 - 이미지/썸네일 자동 생성(추후 워커)
 - 관리자 백오피스 UI(대신 관리용 API만 우선)
