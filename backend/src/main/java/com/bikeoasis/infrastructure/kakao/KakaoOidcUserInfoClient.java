@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * 카카오 OIDC 사용자 Info 관련 카카오 외부 연동을 담당하는 클래스다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

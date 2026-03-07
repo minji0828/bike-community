@@ -9,6 +9,7 @@ import java.util.Map;
 /**
  * 위치 조회 요청 DTO
  */
+
 @Getter
 @Setter
 @NoArgsConstructor

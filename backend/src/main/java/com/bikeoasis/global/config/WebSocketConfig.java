@@ -9,6 +9,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/**
+ * Web Socket 관련 애플리케이션 설정을 담당하는 클래스다.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor

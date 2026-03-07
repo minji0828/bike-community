@@ -7,6 +7,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 일별 레이트 제한 관련 제한 정책을 수행하는 서비스다.
+ */
 @Component
 public class DailyRateLimitService {
 

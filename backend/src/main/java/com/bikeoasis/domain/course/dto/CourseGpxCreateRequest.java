@@ -3,6 +3,9 @@ package com.bikeoasis.domain.course.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 코스 GPX 생성 요청을 전달하는 DTO다.
+ */
 @Getter
 @NoArgsConstructor
 public class CourseGpxCreateRequest {

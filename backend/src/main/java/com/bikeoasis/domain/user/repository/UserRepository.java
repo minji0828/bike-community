@@ -10,6 +10,7 @@ import java.util.Optional;
 /**
  * 사용자 저장소
  */
+
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 

@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
+/**
+ * 라이딩 생성 요청을 전달하는 DTO다.
+ */
 @Getter
 @NoArgsConstructor
 public class RidingCreateRequest {

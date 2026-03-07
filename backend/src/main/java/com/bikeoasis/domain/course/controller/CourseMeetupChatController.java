@@ -13,6 +13,9 @@ import org.springframework.stereotype.Controller;
 import java.security.Principal;
 import java.util.List;
 
+/**
+ * 코스 모임 채팅 관련 API 엔드포인트를 담당하는 컨트롤러다.
+ */
 @Controller
 @RequiredArgsConstructor
 public class CourseMeetupChatController {

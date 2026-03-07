@@ -12,6 +12,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * 카카오 인증 관련 카카오 외부 연동을 담당하는 클래스다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

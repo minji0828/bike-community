@@ -24,6 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * 코스 관리 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * POI 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

@@ -21,6 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 인증 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

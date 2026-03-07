@@ -13,6 +13,7 @@ import java.util.Map;
 /**
  * 위치 조회 응답 DTO
  */
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

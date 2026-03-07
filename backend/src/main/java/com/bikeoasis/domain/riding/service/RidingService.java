@@ -12,6 +12,9 @@ import org.locationtech.jts.geom.LineString;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 라이딩 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

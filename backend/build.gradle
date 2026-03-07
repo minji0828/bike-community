@@ -47,7 +47,7 @@ dependencies {
     // 거리 계산, 교차 여부 확인 등 고도의 지리 연산을 수행하기 위한 표준 라이브러리입니다.
 
     // 6. SpringDoc OpenAPI (Swagger/OpenAPI 3.0)
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
     // [이유]: API 명세서를 자동으로 생성해줍니다.
     // 별도의 문서 작성 없이 웹 브라우저에서 API를 테스트할 수 있어 앱 개발자와의 협업에 필수적입니다.
 

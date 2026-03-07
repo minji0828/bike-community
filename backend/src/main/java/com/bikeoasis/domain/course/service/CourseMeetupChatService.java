@@ -17,6 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 코스 모임 채팅 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Service
 @RequiredArgsConstructor
 public class CourseMeetupChatService {

@@ -15,6 +15,7 @@ import java.util.Optional;
 /**
  * 사용자 위치 저장소
  */
+
 @Repository
 public interface UserLocationRepository extends JpaRepository<UserLocation, Long> {
 

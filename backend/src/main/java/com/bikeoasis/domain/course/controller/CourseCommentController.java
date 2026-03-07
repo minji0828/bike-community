@@ -28,6 +28,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+/**
+ * 코스 댓글 관련 API 엔드포인트를 담당하는 컨트롤러다.
+ */
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor

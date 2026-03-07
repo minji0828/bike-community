@@ -24,6 +24,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 코스 모임 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

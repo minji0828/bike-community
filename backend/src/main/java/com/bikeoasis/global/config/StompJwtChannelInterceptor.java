@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Stomp JWT Channel 관련 애플리케이션 설정을 담당하는 클래스다.
+ */
 @Component
 @RequiredArgsConstructor
 public class StompJwtChannelInterceptor implements ChannelInterceptor {

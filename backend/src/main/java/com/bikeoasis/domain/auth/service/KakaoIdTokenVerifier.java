@@ -25,6 +25,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 카카오 Id 토큰 Verifier 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

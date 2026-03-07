@@ -13,6 +13,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 코스 모임 관련 데이터 접근을 담당하는 리포지토리다.
+ */
 public interface CourseMeetupRepository extends JpaRepository<CourseMeetup, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

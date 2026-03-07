@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 코스 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Entity
 @Table(name = "courses")
 @Getter

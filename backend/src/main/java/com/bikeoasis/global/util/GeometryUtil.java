@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 /**
  * Geometry 및 PostGIS 관련 유틸리티
  */
+
 @Slf4j
 @Component
 public class GeometryUtil {

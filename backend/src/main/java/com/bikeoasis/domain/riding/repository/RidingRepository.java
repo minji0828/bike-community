@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 /**
  * 라이딩 기록 저장소
  */
+
 @Repository
 public interface RidingRepository extends JpaRepository<Riding, Long> {
 

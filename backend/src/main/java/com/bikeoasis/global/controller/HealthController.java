@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+/**
+ * 헬스체크 관련 API 엔드포인트를 담당하는 컨트롤러다.
+ */
 @RestController
 @RequestMapping("/api/v1/health")
 public class HealthController {

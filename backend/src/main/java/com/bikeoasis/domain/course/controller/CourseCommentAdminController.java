@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 코스 댓글 관리 관련 API 엔드포인트를 담당하는 컨트롤러다.
+ */
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor

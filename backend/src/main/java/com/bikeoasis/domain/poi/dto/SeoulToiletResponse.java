@@ -2,6 +2,9 @@ package com.bikeoasis.domain.poi.dto;
 
 import java.util.List;
 
+/**
+ * 서울 Toilet 응답을 전달하는 DTO다.
+ */
 public record SeoulToiletResponse(
         SearchPublicToiletPoiservice SearchPublicToiletPoiservice
 ) {

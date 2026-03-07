@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
          @Index(name = "idx_comment_reports_comment_id", columnList = "comment_id"),
          @Index(name = "idx_comment_reports_status_created_at", columnList = "status,created_at DESC")
         })
+/**
+ * 댓글 신고 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

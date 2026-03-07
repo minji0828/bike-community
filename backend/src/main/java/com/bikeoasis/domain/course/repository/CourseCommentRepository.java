@@ -11,6 +11,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 코스 댓글 관련 데이터 접근을 담당하는 리포지토리다.
+ */
 public interface CourseCommentRepository extends JpaRepository<CourseComment, Long> {
 
     @Query("""

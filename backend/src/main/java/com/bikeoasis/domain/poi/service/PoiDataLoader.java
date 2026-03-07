@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+/**
+ * POI Data 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

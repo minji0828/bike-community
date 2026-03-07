@@ -4,6 +4,9 @@ import com.bikeoasis.global.error.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * 관리 Key 인증 관련 관리자 보조 기능을 담당한다.
+ */
 @Component
 public class AdminKeyAuthService {
 

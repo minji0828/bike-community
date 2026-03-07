@@ -6,6 +6,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Web 관련 애플리케이션 설정을 담당하는 클래스다.
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 

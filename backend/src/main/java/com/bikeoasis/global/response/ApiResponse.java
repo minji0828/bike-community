@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * 공통 API 응답 포맷
  */
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

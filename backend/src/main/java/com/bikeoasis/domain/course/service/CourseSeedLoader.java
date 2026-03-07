@@ -15,6 +15,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * 코스 시드 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 코스 생성 요청을 전달하는 DTO다.
+ */
 @Getter
 @NoArgsConstructor
 public class CourseCreateRequest {

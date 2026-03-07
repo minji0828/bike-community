@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * 태그 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Entity
 @Table(name = "tags")
 @Getter

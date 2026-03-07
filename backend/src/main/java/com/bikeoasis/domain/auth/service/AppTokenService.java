@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * 애플리케이션 토큰 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Component
 @RequiredArgsConstructor
 public class AppTokenService {

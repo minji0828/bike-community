@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 
 import java.security.Principal;
 
+/**
+ * Authenticated 사용자 Resolver 관련 인증 보조 기능을 담당한다.
+ */
 @Component
 public class AuthenticatedUserResolver {
 

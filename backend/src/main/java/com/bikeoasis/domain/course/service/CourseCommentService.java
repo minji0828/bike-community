@@ -19,6 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * 코스 댓글 관련 비즈니스 로직을 담당하는 서비스다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

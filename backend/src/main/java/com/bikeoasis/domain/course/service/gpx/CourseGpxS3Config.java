@@ -8,6 +8,9 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
+/**
+ * 코스 GPX S3 관련 빈 설정을 담당하는 클래스다.
+ */
 @Configuration
 @ConditionalOnProperty(name = "course.gpx.storage.mode", havingValue = "s3")
 public class CourseGpxS3Config {

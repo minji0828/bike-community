@@ -6,6 +6,9 @@ import lombok.*;
 
 import java.io.Serializable;
 
+/**
+ * 코스 태그 Id 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Embeddable
 @Getter
 @Setter

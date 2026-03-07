@@ -2,6 +2,9 @@ package com.bikeoasis.domain.riding.dto;
 
 import java.time.LocalDateTime;
 
+/**
+ * 라이딩 응답을 전달하는 DTO다.
+ */
 public record RidingResponse(
         Long id,
         Long userId,

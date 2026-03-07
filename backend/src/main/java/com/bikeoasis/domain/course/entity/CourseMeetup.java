@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
         @Index(name = "idx_course_meetups_course_status_start", columnList = "course_id,status,start_at"),
         @Index(name = "idx_course_meetups_host_status", columnList = "host_user_id,status")
 })
+/**
+ * 코스 모임 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

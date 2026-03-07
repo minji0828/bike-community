@@ -8,6 +8,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 
+/**
+ * Rest Template 관련 애플리케이션 설정을 담당하는 클래스다.
+ */
 @Configuration
 public class RestTemplateConfig {
 

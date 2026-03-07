@@ -24,6 +24,7 @@ import java.util.*;
 /**
  * 사용자 위치 관련 비즈니스 로직
  */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

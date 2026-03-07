@@ -6,6 +6,9 @@ import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDateTime;
 
+/**
+ * 코스 경고 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Entity
 @Table(name = "course_warnings")
 @Getter

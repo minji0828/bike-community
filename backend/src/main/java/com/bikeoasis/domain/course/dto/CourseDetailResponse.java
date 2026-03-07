@@ -2,6 +2,9 @@ package com.bikeoasis.domain.course.dto;
 
 import java.util.List;
 
+/**
+ * 코스 Detail 응답을 전달하는 DTO다.
+ */
 public record CourseDetailResponse(
         Long id,
         String title,

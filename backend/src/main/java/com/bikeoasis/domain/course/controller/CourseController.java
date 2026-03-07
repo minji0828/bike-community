@@ -27,6 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * 코스 관련 API 엔드포인트를 담당하는 컨트롤러다.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/courses")

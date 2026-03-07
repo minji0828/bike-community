@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Api Access Denied 관련 애플리케이션 설정을 담당하는 클래스다.
+ */
 @Component
 @RequiredArgsConstructor
 public class ApiAccessDeniedHandler implements AccessDeniedHandler {

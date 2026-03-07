@@ -19,6 +19,9 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+/**
+ * S3 코스 GPX 관련 저장소 전략을 표현하는 구현다.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor

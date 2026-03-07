@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 @Table(name = "user_locations", indexes = {
         @Index(name = "idx_user_id_created_at", columnList = "user_id,created_at DESC")
 })
+/**
+ * 사용자 위치 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

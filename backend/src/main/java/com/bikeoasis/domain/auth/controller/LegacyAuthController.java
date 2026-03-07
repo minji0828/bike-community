@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Legacy 인증 관련 API 엔드포인트를 담당하는 컨트롤러다.
+ */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

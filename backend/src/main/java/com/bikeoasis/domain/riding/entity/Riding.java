@@ -5,6 +5,9 @@ import lombok.*;
 import org.locationtech.jts.geom.LineString;
 import java.time.LocalDateTime;
 
+/**
+ * 라이딩 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Entity
 @Table(name = "ridings")
 @Getter

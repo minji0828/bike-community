@@ -24,6 +24,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
+/**
+ * JWT 관련 애플리케이션 설정을 담당하는 클래스다.
+ */
 @Configuration
 public class JwtConfig {
 

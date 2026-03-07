@@ -13,6 +13,7 @@ import java.util.Map;
 /**
  * POI(Point of Interest) 엔티티
  */
+
 @Entity
 @Table(name = "pois")
 @Getter

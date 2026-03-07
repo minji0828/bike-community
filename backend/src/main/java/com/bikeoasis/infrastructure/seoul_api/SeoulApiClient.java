@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * 서울 공공 데이터 API 클라이언트
  */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

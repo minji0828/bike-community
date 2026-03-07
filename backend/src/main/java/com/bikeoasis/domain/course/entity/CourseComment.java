@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
         @Index(name = "idx_course_comments_author_user_id_created_at", columnList = "author_user_id,created_at DESC"),
         @Index(name = "idx_course_comments_status", columnList = "status")
 })
+/**
+ * 코스 댓글 관련 영속 상태를 표현하는 JPA 엔티티다.
+ */
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
