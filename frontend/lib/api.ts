@@ -28,6 +28,11 @@ type ApiRequestDefaults = {
   credentials?: RequestCredentials
 }
 
+/**
+ * 공통 API 호출기.
+ * - backend 직접 호출과 same-origin app route 호출을 같은 에러 포맷으로 다룬다.
+ * - 타임아웃과 JSON envelope 파싱을 한 곳에 모은다.
+ */
 async function requestApi<T>(path: string, options: ApiFetchOptions = {}, defaults: ApiRequestDefaults = {}) {
   const { token, headers, timeoutMs = 15000, signal, ...rest } = options
   const requestHeaders = new Headers(headers)
@@ -111,6 +116,10 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
   return requestApi<T>(path, options, { baseUrl: API_BASE_URL })
 }
 
+/**
+ * Next app route(`/api/...`)를 같은 출처 기준으로 호출할 때 사용한다.
+ * 인증 쿠키/프록시 경유가 필요한 요청은 이 함수를 우선 사용한다.
+ */
 export async function appRouteFetch<T>(path: string, options: ApiFetchOptions = {}) {
   return requestApi<T>(path, options, { credentials: 'same-origin' })
 }

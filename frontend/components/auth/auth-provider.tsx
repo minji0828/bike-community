@@ -46,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const syncAuth = async () => {
+      // 앱 최초 진입 시 저장 토큰 -> 서버 재검증 순서로 인증 상태를 확정한다.
       const stored = getStoredAuthState()
       if (!stored.token || stored.isExpired || !stored.user) {
         clearStoredAccessToken()
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus('checking')
 
       try {
+        // auth 민감 요청은 backend direct가 아니라 same-origin app route를 통과시킨다.
         const profile = await appRouteFetch<AuthMeResponse>('/api/auth/me', {
           method: 'GET',
           headers: {
@@ -147,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error('로그인 state 검증에 실패했습니다.')
     }
 
+    // callback에서 받은 code/state를 backend에 전달해 서비스 JWT를 발급받는다.
     const response = await apiFetch<{ accessToken: string; expiresInSec: number }>('/api/v1/auth/kakao', {
       method: 'POST',
       body: JSON.stringify({

@@ -16,6 +16,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompJwtChannelInterceptor stompJwtChannelInterceptor;
 
+    /**
+     * 로컬/배포 환경별로 WebSocket 허용 Origin을 제한하기 위한 설정값이다.
+     * 기존의 '*' 허용 대신 env 기반으로 제어한다.
+     */
     @Value("${app.websocket.allowed-origin-patterns:http://localhost:3000,http://localhost:3001}")
     private String[] allowedOriginPatterns;
 

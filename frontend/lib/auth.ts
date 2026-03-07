@@ -80,6 +80,10 @@ export function getStoredAccessToken() {
   return cookieToken || localToken
 }
 
+/**
+ * 초기 부팅 시 필요한 인증 상태를 한 번에 읽는다.
+ * provider가 token/user/만료 여부를 따로 흩어 읽지 않도록 고정된 진입점으로 사용한다.
+ */
 export function getStoredAuthState(): StoredAuthState {
   const token = getStoredAccessToken()
   const user = getAuthUserFromToken(token)
