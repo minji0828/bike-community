@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar, MapPin, Users } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
 import { MeetupChat } from '@/components/chat/meetup-chat'
@@ -12,11 +12,13 @@ import { getMeetup, type CourseMeetup } from '@/lib/meetups'
 
 export default function MeetupChatPage() {
   const routeParams = useParams()
+  const router = useRouter()
   const meetupIdParam = routeParams?.meetupId
   const meetupId = typeof meetupIdParam === 'string' ? meetupIdParam : Array.isArray(meetupIdParam) ? meetupIdParam[0] : ''
   const parsedMeetupId = Number(meetupId)
   const { token, isAuthenticated } = useAuth()
   const [meetup, setMeetup] = useState<CourseMeetup | null>(null)
+  const [isMeetupLoading, setIsMeetupLoading] = useState(Number.isFinite(parsedMeetupId))
   const [error, setError] = useState<string | null>(Number.isFinite(parsedMeetupId) ? null : '잘못된 모임 ID입니다.')
 
   useEffect(() => {
@@ -24,14 +26,27 @@ export default function MeetupChatPage() {
       return
     }
 
+    const loadingTimer = window.setTimeout(() => {
+      setIsMeetupLoading(true)
+    }, 0)
+
     getMeetup(parsedMeetupId, token)
       .then((response) => {
         setMeetup(response)
         setError(null)
       })
       .catch((meetupError) => {
+        setMeetup(null)
         setError(meetupError instanceof Error ? meetupError.message : '모임 정보를 불러오지 못했습니다.')
       })
+      .finally(() => {
+        setIsMeetupLoading(false)
+        window.clearTimeout(loadingTimer)
+      })
+
+    return () => {
+      window.clearTimeout(loadingTimer)
+    }
   }, [parsedMeetupId, token])
 
   return (
@@ -97,6 +112,13 @@ export default function MeetupChatPage() {
               </Link>
             </CardContent>
           </Card>
+        ) : isMeetupLoading ? (
+          <Card>
+            <CardContent className="space-y-3 p-5 text-center">
+              <p className="font-semibold text-foreground">모임 참가 상태를 확인하고 있어요.</p>
+              <p className="text-sm text-muted-foreground">채팅 연결 전에 모임 정보와 참가 여부를 먼저 확인합니다.</p>
+            </CardContent>
+          </Card>
         ) : error ? (
           <Card>
             <CardContent className="space-y-3 p-5 text-center">
@@ -104,8 +126,32 @@ export default function MeetupChatPage() {
               <p className="text-sm text-rose-600">{error}</p>
             </CardContent>
           </Card>
-        ) : (
+        ) : meetup && !meetup.joined ? (
+          <Card>
+            <CardContent className="space-y-4 p-5 text-center">
+              <div className="space-y-2">
+                <p className="font-semibold text-foreground">모임 참가자만 채팅에 입장할 수 있어요.</p>
+                <p className="text-sm text-muted-foreground">먼저 코스 모임에 참가한 뒤 다시 채팅방으로 들어와 주세요.</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" onClick={() => router.back()} className="w-full">
+                  이전 화면으로 돌아가기
+                </Button>
+                <Link href={`/course/${meetup.courseId}`}>
+                  <Button className="w-full">코스 상세로 이동</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ) : meetup ? (
           <MeetupChat meetupId={parsedMeetupId} token={token} />
+        ) : (
+          <Card>
+            <CardContent className="space-y-3 p-5 text-center">
+              <p className="font-semibold text-foreground">채팅방 준비 중입니다.</p>
+              <p className="text-sm text-muted-foreground">모임 정보를 다시 확인한 뒤 채팅을 열어 주세요.</p>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>

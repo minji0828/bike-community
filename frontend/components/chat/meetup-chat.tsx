@@ -15,6 +15,35 @@ function upsertMessages(previous: MeetupChatMessage[], incoming: MeetupChatMessa
   return [...map.values()].sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime())
 }
 
+function toFriendlyChatError(message: string) {
+  const normalized = message.toLowerCase()
+
+  if (
+    normalized.includes('403') ||
+    normalized.includes('executor') ||
+    normalized.includes('accessdenied') ||
+    normalized.includes('forbidden')
+  ) {
+    return '모임 참가자만 단체채팅을 사용할 수 있습니다. 참가 상태를 확인한 뒤 다시 입장해 주세요.'
+  }
+
+  if (
+    normalized.includes('401') ||
+    normalized.includes('authorization') ||
+    normalized.includes('invalid_token') ||
+    normalized.includes('token') ||
+    normalized.includes('인증')
+  ) {
+    return '로그인 상태를 확인한 뒤 다시 입장해 주세요.'
+  }
+
+  if (normalized.includes('닫') || normalized.includes('closed') || normalized.includes('close')) {
+    return '채팅 연결이 중간에 끊어졌습니다. 잠시 후 다시 입장해 주세요.'
+  }
+
+  return '채팅 연결에 실패했습니다. 잠시 후 다시 입장해 주세요.'
+}
+
 export function MeetupChat({ meetupId, token }: { meetupId: number; token: string }) {
   const [messages, setMessages] = useState<MeetupChatMessage[]>([])
   const [draft, setDraft] = useState('')
@@ -25,12 +54,18 @@ export function MeetupChat({ meetupId, token }: { meetupId: number; token: strin
   const wsUrl = useMemo(() => `${toWebSocketUrl(API_BASE_URL)}/ws-stomp`, [])
 
   useEffect(() => {
+    let cancelled = false
+
     const client = new SimpleStompClient({
       url: wsUrl,
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
       onMessage: (frame) => {
+        if (cancelled) {
+          return
+        }
+
         const destination = frame.headers.destination
 
         try {
@@ -49,30 +84,54 @@ export function MeetupChat({ meetupId, token }: { meetupId: number; token: strin
         }
       },
       onError: (message) => {
+        if (cancelled) {
+          return
+        }
         setStatus('error')
-        setError(message.includes('403') ? '모임 참가자만 단체채팅을 사용할 수 있습니다.' : message)
+        setError(toFriendlyChatError(message))
       },
       onClose: () => {
+        if (cancelled) {
+          return
+        }
         setStatus((previous) => (previous === 'error' ? previous : 'connecting'))
       },
     })
 
     clientRef.current = client
 
-    client
-      .connect()
-      .then(() => {
-        setStatus('connected')
-        client.subscribe(`/topic/meetups/${meetupId}/chat`, `meetup-chat-${meetupId}`)
-        client.subscribe(`/user/queue/meetups/${meetupId}/chat.history`, `meetup-history-${meetupId}`)
-        client.send(`/app/meetups/${meetupId}/chat.history`)
-      })
-      .catch((connectError) => {
-        setStatus('error')
-        setError(connectError instanceof Error ? connectError.message : '채팅 연결에 실패했습니다.')
-      })
+    const connectTimer = window.setTimeout(() => {
+      if (cancelled) {
+        return
+      }
+
+      setStatus('connecting')
+      setError(null)
+
+      client
+        .connect()
+        .then(() => {
+          if (cancelled) {
+            client.disconnect()
+            return
+          }
+          setStatus('connected')
+          client.subscribe(`/topic/meetups/${meetupId}/chat`, `meetup-chat-${meetupId}`)
+          client.subscribe(`/user/queue/meetups/${meetupId}/chat.history`, `meetup-history-${meetupId}`)
+          client.send(`/app/meetups/${meetupId}/chat.history`)
+        })
+        .catch((connectError) => {
+          if (cancelled) {
+            return
+          }
+          setStatus('error')
+          setError(toFriendlyChatError(connectError instanceof Error ? connectError.message : '채팅 연결에 실패했습니다.'))
+        })
+    }, 0)
 
     return () => {
+      cancelled = true
+      window.clearTimeout(connectTimer)
       client.disconnect()
       clientRef.current = null
     }
