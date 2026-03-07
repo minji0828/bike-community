@@ -7,7 +7,7 @@ import com.bikeoasis.domain.course.dto.CourseCommentCreateResponse;
 import com.bikeoasis.domain.course.dto.CourseCommentResponse;
 import com.bikeoasis.domain.course.entity.CourseComment;
 import com.bikeoasis.domain.course.service.CourseCommentService;
-import com.bikeoasis.global.error.BusinessException;
+import com.bikeoasis.global.auth.AuthenticatedUserResolver;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,7 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -28,6 +35,7 @@ import java.util.List;
 public class CourseCommentController {
 
     private final CourseCommentService courseCommentService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @PostMapping("/courses/{courseId}/comments")
     @Operation(summary = "댓글 작성", description = "코스에 댓글을 작성합니다. 작성자 표시는 항상 익명입니다.")
@@ -36,7 +44,7 @@ public class CourseCommentController {
             @RequestBody CourseCommentCreateRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = requireUserId(jwt);
+        Long userId = authenticatedUserResolver.requireUserId(jwt);
         Long commentId = courseCommentService.createComment(courseId, userId, request == null ? null : request.body());
         return ResponseEntity.ok(ApiResponse.success(new CourseCommentCreateResponse(commentId)));
     }
@@ -49,7 +57,7 @@ public class CourseCommentController {
             @RequestParam(defaultValue = "20") int limit,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long currentUserId = getUserId(jwt);
+        Long currentUserId = authenticatedUserResolver.getUserId(jwt);
         List<CourseComment> comments = courseCommentService.listComments(courseId, cursor, limit);
         List<CourseCommentResponse> response = comments.stream()
                 .map(c -> new CourseCommentResponse(
@@ -76,7 +84,7 @@ public class CourseCommentController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = requireUserId(jwt);
+        Long userId = authenticatedUserResolver.requireUserId(jwt);
         courseCommentService.deleteComment(commentId, userId);
         return ResponseEntity.ok(ApiResponse.success("deleted"));
     }
@@ -88,31 +96,8 @@ public class CourseCommentController {
             @RequestBody CommentReportCreateRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = requireUserId(jwt);
+        Long userId = authenticatedUserResolver.requireUserId(jwt);
         Long reportId = courseCommentService.reportComment(commentId, userId, request);
         return ResponseEntity.ok(ApiResponse.success(new CommentReportCreateResponse(reportId)));
-    }
-
-    private Long getUserId(Jwt jwt) {
-        if (jwt == null) {
-            return null;
-        }
-        String sub = jwt.getSubject();
-        if (sub == null || sub.isBlank()) {
-            return null;
-        }
-        try {
-            return Long.parseLong(sub);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private Long requireUserId(Jwt jwt) {
-        Long userId = getUserId(jwt);
-        if (userId == null) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-        return userId;
     }
 }

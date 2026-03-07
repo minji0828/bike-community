@@ -3,7 +3,7 @@ package com.bikeoasis.domain.course.controller;
 import com.bikeoasis.domain.course.dto.MeetupChatMessageResponse;
 import com.bikeoasis.domain.course.dto.MeetupChatSendRequest;
 import com.bikeoasis.domain.course.service.CourseMeetupChatService;
-import com.bikeoasis.global.error.BusinessException;
+import com.bikeoasis.global.auth.AuthenticatedUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -19,6 +19,7 @@ public class CourseMeetupChatController {
 
     private final CourseMeetupChatService courseMeetupChatService;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @MessageMapping("/meetups/{meetupId}/chat.send")
     public void sendMessage(
@@ -26,7 +27,7 @@ public class CourseMeetupChatController {
             MeetupChatSendRequest request,
             Principal principal
     ) {
-        Long userId = requireUserId(principal);
+        Long userId = authenticatedUserResolver.requireUserId(principal);
         String body = request == null ? null : request.body();
         MeetupChatMessageResponse message = courseMeetupChatService.publishMessage(meetupId, userId, body);
         simpMessagingTemplate.convertAndSend("/topic/meetups/" + meetupId + "/chat", message);
@@ -37,23 +38,12 @@ public class CourseMeetupChatController {
             @DestinationVariable Long meetupId,
             Principal principal
     ) {
-        Long userId = requireUserId(principal);
+        Long userId = authenticatedUserResolver.requireUserId(principal);
         List<MeetupChatMessageResponse> history = courseMeetupChatService.getRecentMessages(meetupId, userId);
         simpMessagingTemplate.convertAndSendToUser(
                 principal.getName(),
                 "/queue/meetups/" + meetupId + "/chat.history",
                 history
         );
-    }
-
-    private Long requireUserId(Principal principal) {
-        if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-        try {
-            return Long.parseLong(principal.getName());
-        } catch (NumberFormatException e) {
-            throw new BusinessException(401, "유효하지 않은 사용자 인증입니다.");
-        }
     }
 }

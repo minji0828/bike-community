@@ -4,6 +4,7 @@ import com.bikeoasis.domain.user.dto.LocationResponse;
 import com.bikeoasis.domain.user.dto.LocationUpdateRequest;
 import com.bikeoasis.domain.user.service.LocationService;
 import com.bikeoasis.global.admin.AdminKeyAuthService;
+import com.bikeoasis.global.auth.AuthenticatedUserResolver;
 import com.bikeoasis.global.error.BusinessException;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +16,15 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -33,6 +42,7 @@ import java.util.Map;
 public class LocationController {
     private final LocationService locationService;
     private final AdminKeyAuthService adminKeyAuthService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @GetMapping("/{userId}/current")
     @Operation(summary = "현재 위치 조회", description = "사용자의 가장 최근 위치를 조회합니다.")
@@ -40,7 +50,7 @@ public class LocationController {
             @PathVariable Long userId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 현재 위치 조회 요청", userId);
         LocationResponse location = locationService.getCurrentLocation(userId);
@@ -54,7 +64,7 @@ public class LocationController {
             @RequestBody LocationUpdateRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 위치 업데이트 요청", userId);
         LocationResponse location = locationService.updateLocation(userId, request);
@@ -69,7 +79,7 @@ public class LocationController {
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 위치 이력 조회: page={}, size={}", userId, page, size);
         Page<LocationResponse> locations = locationService.getLocationHistory(userId, page, size);
@@ -84,7 +94,7 @@ public class LocationController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 기간별 위치 이력 조회: {} ~ {}", userId, startTime, endTime);
         List<LocationResponse> locations = locationService.getLocationsByPeriod(userId, startTime, endTime);
@@ -98,7 +108,7 @@ public class LocationController {
             @RequestParam(defaultValue = "50") int limit,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 최근 {} 개 위치 조회", userId, limit);
         List<LocationResponse> locations = locationService.getLastNLocations(userId, limit);
@@ -126,7 +136,7 @@ public class LocationController {
             @RequestParam(defaultValue = "50") int limit,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 이동 거리 계산", userId);
         double distance = locationService.calculateTravelDistance(userId, limit);
@@ -144,28 +154,11 @@ public class LocationController {
             @RequestParam(defaultValue = "30") int daysToKeep,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         requireSameUser(requesterUserId, userId);
         log.info("사용자 {} 오래된 위치 이력 삭제 ({}일 이전)", userId, daysToKeep);
         locationService.deleteOldLocationHistory(userId, daysToKeep);
         return ResponseEntity.ok(ApiResponse.success("오래된 위치 이력이 삭제되었습니다"));
-    }
-
-    private Long requireUserId(Jwt jwt) {
-        if (jwt == null) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-
-        String sub = jwt.getSubject();
-        if (sub == null || sub.isBlank()) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-
-        try {
-            return Long.parseLong(sub);
-        } catch (NumberFormatException e) {
-            throw new BusinessException(401, "유효하지 않은 인증 토큰입니다.");
-        }
     }
 
     private void requireSameUser(Long requesterUserId, Long targetUserId) {

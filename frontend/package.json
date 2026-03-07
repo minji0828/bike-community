@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build --webpack",
     "dev": "next dev --webpack",
+    "dev:clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev --webpack",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit --pretty false",
     "check": "npm run lint && npm run typecheck && npm run build",

@@ -23,7 +23,12 @@ type ApiFetchOptions = RequestInit & {
   timeoutMs?: number
 }
 
-export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
+type ApiRequestDefaults = {
+  baseUrl?: string
+  credentials?: RequestCredentials
+}
+
+async function requestApi<T>(path: string, options: ApiFetchOptions = {}, defaults: ApiRequestDefaults = {}) {
   const { token, headers, timeoutMs = 15000, signal, ...rest } = options
   const requestHeaders = new Headers(headers)
 
@@ -50,21 +55,24 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
     }
   }
 
+  const requestUrl = path.startsWith('http://') || path.startsWith('https://') ? path : `${defaults.baseUrl ?? ''}${path}`
+
   let response: Response
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(requestUrl, {
       ...rest,
+      credentials: rest.credentials ?? defaults.credentials,
       headers: requestHeaders,
       signal: controller.signal,
     })
-  } catch (error) {
+  } catch {
     globalThis.clearTimeout(timeoutId)
 
     if (controller.signal.aborted) {
       throw new ApiError('요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.', 408)
     }
 
-    throw new ApiError('서버에 연결하지 못했습니다. 백엔드가 실행 중인지 확인해주세요.', 0)
+    throw new ApiError('서버에 연결하지 못했습니다. 실행 중인지 확인해주세요.', 0)
   }
   globalThis.clearTimeout(timeoutId)
 
@@ -97,4 +105,12 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
   }
 
   return payload.data
+}
+
+export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}) {
+  return requestApi<T>(path, options, { baseUrl: API_BASE_URL })
+}
+
+export async function appRouteFetch<T>(path: string, options: ApiFetchOptions = {}) {
+  return requestApi<T>(path, options, { credentials: 'same-origin' })
 }

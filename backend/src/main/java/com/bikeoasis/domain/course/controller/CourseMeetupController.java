@@ -4,7 +4,7 @@ import com.bikeoasis.domain.course.dto.CourseMeetupCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseMeetupCreateResponse;
 import com.bikeoasis.domain.course.dto.CourseMeetupResponse;
 import com.bikeoasis.domain.course.service.CourseMeetupService;
-import com.bikeoasis.global.error.BusinessException;
+import com.bikeoasis.global.auth.AuthenticatedUserResolver;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,7 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -23,6 +29,7 @@ import java.util.List;
 public class CourseMeetupController {
 
     private final CourseMeetupService courseMeetupService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @PostMapping("/courses/{courseId}/meetups")
     @Operation(summary = "모임 생성", description = "코스 기반 모임을 생성합니다.")
@@ -31,7 +38,7 @@ public class CourseMeetupController {
             @RequestBody CourseMeetupCreateRequest request,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = requireUserId(jwt);
+        Long userId = authenticatedUserResolver.requireUserId(jwt);
         Long meetupId = courseMeetupService.createMeetup(courseId, userId, request);
         return ResponseEntity.ok(ApiResponse.success(new CourseMeetupCreateResponse(meetupId)));
     }
@@ -43,7 +50,7 @@ public class CourseMeetupController {
             @RequestParam(required = false) String status,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = getUserId(jwt);
+        Long userId = authenticatedUserResolver.getUserId(jwt);
         List<CourseMeetupResponse> response = courseMeetupService.listMeetups(courseId, status, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -54,7 +61,7 @@ public class CourseMeetupController {
             @PathVariable Long meetupId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = getUserId(jwt);
+        Long userId = authenticatedUserResolver.getUserId(jwt);
         CourseMeetupResponse response = courseMeetupService.getMeetup(meetupId, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -65,7 +72,7 @@ public class CourseMeetupController {
             @PathVariable Long meetupId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = requireUserId(jwt);
+        Long userId = authenticatedUserResolver.requireUserId(jwt);
         courseMeetupService.joinMeetup(meetupId, userId);
         return ResponseEntity.ok(ApiResponse.success("joined"));
     }
@@ -76,31 +83,8 @@ public class CourseMeetupController {
             @PathVariable Long meetupId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long userId = requireUserId(jwt);
+        Long userId = authenticatedUserResolver.requireUserId(jwt);
         courseMeetupService.leaveMeetup(meetupId, userId);
         return ResponseEntity.ok(ApiResponse.success("left"));
-    }
-
-    private Long getUserId(Jwt jwt) {
-        if (jwt == null) {
-            return null;
-        }
-        String sub = jwt.getSubject();
-        if (sub == null || sub.isBlank()) {
-            return null;
-        }
-        try {
-            return Long.parseLong(sub);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private Long requireUserId(Jwt jwt) {
-        Long userId = getUserId(jwt);
-        if (userId == null) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-        return userId;
     }
 }

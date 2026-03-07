@@ -17,6 +17,12 @@ export type AuthUser = {
   expiresAt?: number
 }
 
+export type StoredAuthState = {
+  token: string | null
+  user: AuthUser | null
+  isExpired: boolean
+}
+
 function isBrowser() {
   return typeof window !== 'undefined'
 }
@@ -72,6 +78,18 @@ export function getStoredAccessToken() {
   const localToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
 
   return cookieToken || localToken
+}
+
+export function getStoredAuthState(): StoredAuthState {
+  const token = getStoredAccessToken()
+  const user = getAuthUserFromToken(token)
+  const isExpired = isTokenExpired(token)
+
+  return {
+    token,
+    user,
+    isExpired,
+  }
 }
 
 export function setStoredAccessToken(token: string) {

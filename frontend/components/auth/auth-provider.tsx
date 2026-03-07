@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, appRouteFetch, ApiError } from '@/lib/api'
 import {
   AuthUser,
   clearKakaoLoginSession,
@@ -9,8 +9,7 @@ import {
   getAuthUserFromToken,
   getKakaoLoginSession,
   getKakaoRedirectUri,
-  getStoredAccessToken,
-  isTokenExpired,
+  getStoredAuthState,
   saveKakaoLoginSession,
   setStoredAccessToken,
 } from '@/lib/auth'
@@ -22,13 +21,10 @@ type AuthMeResponse = {
   provider?: string | null
 }
 
-type ApiEnvelope<T> = {
-  code: number
-  message: string
-  data: T | null
-}
+type AuthStatus = 'checking' | 'authenticated' | 'anonymous' | 'error'
 
 type AuthContextValue = {
+  status: AuthStatus
   token: string | null
   user: AuthUser | null
   isLoading: boolean
@@ -42,6 +38,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [status, setStatus] = useState<AuthStatus>('checking')
   const [token, setToken] = useState<string | null>(null)
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -49,50 +46,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const syncAuth = async () => {
-      const stored = getStoredAccessToken()
-      if (!stored || isTokenExpired(stored)) {
+      const stored = getStoredAuthState()
+      if (!stored.token || stored.isExpired || !stored.user) {
         clearStoredAccessToken()
         setToken(null)
         setUser(null)
         setAuthError(null)
+        setStatus('anonymous')
         setIsLoading(false)
         return
       }
 
-      setToken(stored)
-      setStoredAccessToken(stored)
-      setUser(getAuthUserFromToken(stored))
+      setToken(stored.token)
+      setStoredAccessToken(stored.token)
+      setUser(stored.user)
       setAuthError(null)
+      setStatus('checking')
 
       try {
-        const response = await fetch('/api/auth/me', {
+        const profile = await appRouteFetch<AuthMeResponse>('/api/auth/me', {
           method: 'GET',
           headers: {
-            Accept: 'application/json',
-            Authorization: `Bearer ${stored}`,
+            Authorization: `Bearer ${stored.token}`,
           },
           cache: 'no-store',
-          credentials: 'same-origin',
         })
-
-        const payload = (await response.json()) as ApiEnvelope<AuthMeResponse>
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message || 'auth_me_failed')
-        }
-
-        const profile = payload.data
 
         setUser({
           userId: String(profile.userId),
           username: profile.username,
           provider: profile.provider ?? undefined,
-          expiresAt: getAuthUserFromToken(stored)?.expiresAt,
+          expiresAt: stored.user.expiresAt,
         })
+        setStatus('authenticated')
       } catch (error) {
         clearStoredAccessToken()
         setToken(null)
         setUser(null)
-        if (error instanceof Error && /인증|토큰/.test(error.message)) {
+        setStatus('error')
+        if (error instanceof ApiError && error.status === 401) {
           setAuthError('저장된 로그인 정보가 만료되었어요. 다시 로그인해주세요.')
         } else {
           setAuthError('로그인 상태를 확인하지 못했습니다. 다시 로그인해주세요.')
@@ -106,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearStoredAccessToken()
       setToken(null)
       setUser(null)
+      setStatus('error')
       setAuthError('로그인 상태를 확인하지 못했습니다. 다시 로그인해주세요.')
       setIsLoading(false)
     })
@@ -164,9 +157,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }),
     })
 
+    const nextUser = getAuthUserFromToken(response.accessToken)
     setStoredAccessToken(response.accessToken)
     setToken(response.accessToken)
-    setUser(getAuthUserFromToken(response.accessToken))
+    setUser(nextUser)
+    setStatus(nextUser ? 'authenticated' : 'anonymous')
+    setAuthError(null)
     clearKakaoLoginSession()
   }, [])
 
@@ -176,20 +172,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null)
     setUser(null)
     setAuthError(null)
+    setStatus('anonymous')
   }, [])
 
   const value = useMemo(
     () => ({
+      status,
       token,
       user,
       isLoading,
-      isAuthenticated: Boolean(token && user),
+      isAuthenticated: status === 'authenticated' && Boolean(token && user),
       authError,
       startKakaoLogin,
       completeKakaoLogin,
       logout,
     }),
-    [authError, completeKakaoLogin, isLoading, logout, startKakaoLogin, token, user]
+    [authError, completeKakaoLogin, isLoading, logout, startKakaoLogin, status, token, user]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

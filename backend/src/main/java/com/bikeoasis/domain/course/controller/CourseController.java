@@ -8,7 +8,7 @@ import com.bikeoasis.domain.course.dto.CourseFromRidingCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseGpxCreateRequest;
 import com.bikeoasis.domain.course.dto.CourseShareResponse;
 import com.bikeoasis.domain.course.service.CourseService;
-import com.bikeoasis.global.error.BusinessException;
+import com.bikeoasis.global.auth.AuthenticatedUserResolver;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -28,6 +34,7 @@ import java.util.List;
 public class CourseController {
 
     private final CourseService courseService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @PostMapping
     @Operation(summary = "코스 생성", description = "경로 업로드 기반 코스를 생성합니다.")
@@ -83,7 +90,7 @@ public class CourseController {
             @PathVariable Long courseId,
             @AuthenticationPrincipal Jwt jwt
     ) {
-        Long requesterUserId = requireUserId(jwt);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
         String shareId = courseService.issueShareId(courseId, requesterUserId);
         return ResponseEntity.ok(ApiResponse.success(new CourseShareResponse(shareId)));
     }
@@ -102,22 +109,5 @@ public class CourseController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, "application/gpx+xml; charset=UTF-8")
                 .body(gpx);
-    }
-
-    private Long requireUserId(Jwt jwt) {
-        if (jwt == null) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-
-        String sub = jwt.getSubject();
-        if (sub == null || sub.isBlank()) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-
-        try {
-            return Long.parseLong(sub);
-        } catch (NumberFormatException e) {
-            throw new BusinessException(401, "유효하지 않은 인증 토큰입니다.");
-        }
     }
 }

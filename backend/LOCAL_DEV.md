@@ -1,5 +1,8 @@
 # Backend 로컬 개발 실행 가이드
 
+> 저장소 전체 기준 실행 문서는 `docs/local-dev-runbook.md` 입니다.  
+> 이 문서는 **백엔드 전용 보조 메모**만 담습니다.
+
 로컬에서 **PostgreSQL/PostGIS(Docker)** + **Spring Boot(Gradle)** 를 바로 띄우는 절차입니다.
 
 ## 0) 사전 준비
@@ -36,6 +39,7 @@ cp backend/src/main/resources/application-local.example.yml backend/src/main/res
 - `spring.datasource.url=jdbc:postgresql://localhost:15432/bikeoasis`
 - `spring.datasource.password=postgres` (docker-compose.local.yml 기본과 일치)
 - `app.jwt.secret` 는 로컬 개발용(32바이트 이상)
+- WebSocket origin을 제한하려면 `APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS=http://localhost:3000`
 
 ## 3) 백엔드 실행
 

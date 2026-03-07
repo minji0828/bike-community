@@ -4,7 +4,7 @@ import com.bikeoasis.domain.auth.dto.AuthTokenResponse;
 import com.bikeoasis.domain.auth.dto.AuthMeResponse;
 import com.bikeoasis.domain.auth.dto.KakaoLoginRequest;
 import com.bikeoasis.domain.auth.service.AuthService;
-import com.bikeoasis.global.error.BusinessException;
+import com.bikeoasis.global.auth.AuthenticatedUserResolver;
 import com.bikeoasis.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,7 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     @PostMapping("/kakao")
     @Operation(summary = "카카오 로그인", description = "authorization code(PKCE)를 교환해 서비스 access token(JWT)을 발급합니다.")
@@ -32,19 +37,7 @@ public class AuthController {
     @GetMapping("/me")
     @Operation(summary = "현재 로그인 사용자 조회", description = "서비스 access token(JWT) 기준 현재 로그인 사용자 정보를 반환합니다.")
     public ResponseEntity<ApiResponse<AuthMeResponse>> me(@AuthenticationPrincipal Jwt jwt) {
-        AuthMeResponse response = authService.getCurrentUser(requireUserId(jwt));
+        AuthMeResponse response = authService.getCurrentUser(authenticatedUserResolver.requireUserId(jwt));
         return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    private Long requireUserId(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null || jwt.getSubject().isBlank()) {
-            throw new BusinessException(401, "인증이 필요합니다.");
-        }
-
-        try {
-            return Long.parseLong(jwt.getSubject());
-        } catch (NumberFormatException e) {
-            throw new BusinessException(401, "유효하지 않은 인증 토큰입니다.");
-        }
     }
 }
