@@ -1,5 +1,6 @@
 package com.bikeoasis.domain.course.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,8 +9,8 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CourseGpxCreateRequest {
-    private Long ownerUserId;
     private String deviceUuid;
     private String title;
     private String description;

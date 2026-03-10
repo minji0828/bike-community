@@ -41,24 +41,30 @@ public class CourseController {
 
     @PostMapping
     @Operation(summary = "코스 생성", description = "경로 업로드 기반 코스를 생성합니다.")
-    public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourse(@RequestBody CourseCreateRequest request) {
-        Long courseId = courseService.createCourse(request);
+    public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourse(@RequestBody CourseCreateRequest request,
+                                                                          @AuthenticationPrincipal Jwt jwt) {
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
+        Long courseId = courseService.createCourse(request, requesterUserId);
         return ResponseEntity.ok(ApiResponse.success(new CourseCreateResponse(courseId)));
     }
 
     @PostMapping("/from-riding")
     @Operation(summary = "코스 생성(라이딩 기반)", description = "라이딩 기록(ridingId)으로 코스를 생성합니다.")
     public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourseFromRiding(
-            @RequestBody CourseFromRidingCreateRequest request
+            @RequestBody CourseFromRidingCreateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        Long courseId = courseService.createCourseFromRiding(request);
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
+        Long courseId = courseService.createCourseFromRiding(request, requesterUserId);
         return ResponseEntity.ok(ApiResponse.success(new CourseCreateResponse(courseId)));
     }
 
     @PostMapping("/gpx")
     @Operation(summary = "GPX 코스 생성", description = "GPX XML 기반 코스를 생성합니다.")
-    public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourseFromGpx(@RequestBody CourseGpxCreateRequest request) {
-        Long courseId = courseService.createCourseFromGpx(request);
+    public ResponseEntity<ApiResponse<CourseCreateResponse>> createCourseFromGpx(@RequestBody CourseGpxCreateRequest request,
+                                                                                 @AuthenticationPrincipal Jwt jwt) {
+        Long requesterUserId = authenticatedUserResolver.requireUserId(jwt);
+        Long courseId = courseService.createCourseFromGpx(request, requesterUserId);
         return ResponseEntity.ok(ApiResponse.success(new CourseCreateResponse(courseId)));
     }
 

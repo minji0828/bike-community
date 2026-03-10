@@ -7,7 +7,6 @@ export type RidingPointPayload = {
 
 export type CreateRidingRequest = {
   deviceUuid: string
-  userId?: number
   title: string
   totalDistance: number
   totalTime: number

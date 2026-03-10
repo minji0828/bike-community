@@ -36,12 +36,11 @@ class RidingServiceTest {
     }
 
     @Test
-    void saveRiding_acceptsLngAliasAndSetsSrid4326() throws Exception {
+    void saveRiding_acceptsLngAliasAndStoresAuthenticatedUser() throws Exception {
         // language=JSON
         String json = """
                 {
                   "deviceUuid": "device-1",
-                  "userId": 1,
                   "title": "ride",
                   "totalDistance": 1234.5,
                   "totalTime": 360,
@@ -70,12 +69,13 @@ class RidingServiceTest {
                     .build();
         });
 
-        Long savedId = ridingService.saveRiding(request);
+        Long savedId = ridingService.saveRiding(request, 99L);
 
         Assertions.assertThat(savedId).isEqualTo(1L);
 
         Riding saved = captor.getValue();
         Assertions.assertThat(saved.getDeviceUuid()).isEqualTo("device-1");
+        Assertions.assertThat(saved.getUserId()).isEqualTo(99L);
 
         LineString pathData = saved.getPathData();
         Assertions.assertThat(pathData).isNotNull();
@@ -95,7 +95,7 @@ class RidingServiceTest {
         RidingCreateRequest request = objectMapper.readValue(json, RidingCreateRequest.class);
 
         BusinessException ex = Assertions.catchThrowableOfType(
-                () -> ridingService.saveRiding(request),
+                () -> ridingService.saveRiding(request, 1L),
                 BusinessException.class
         );
 
@@ -112,7 +112,7 @@ class RidingServiceTest {
         RidingCreateRequest request = objectMapper.readValue(json, RidingCreateRequest.class);
 
         BusinessException ex = Assertions.catchThrowableOfType(
-                () -> ridingService.saveRiding(request),
+                () -> ridingService.saveRiding(request, 1L),
                 BusinessException.class
         );
 
@@ -129,12 +129,30 @@ class RidingServiceTest {
         RidingCreateRequest request = objectMapper.readValue(json, RidingCreateRequest.class);
 
         BusinessException ex = Assertions.catchThrowableOfType(
-                () -> ridingService.saveRiding(request),
+                () -> ridingService.saveRiding(request, 1L),
                 BusinessException.class
         );
 
         Assertions.assertThat(ex.getCode()).isEqualTo(400);
         Assertions.assertThat(ex.getMessage()).contains("path");
     }
-}
 
+    @Test
+    void saveRiding_throws401WhenRequesterMissing() throws Exception {
+        String json = """
+                {
+                  "deviceUuid": "device-1",
+                  "path": [ { "lat": 37.1, "lon": 127.1 }, { "lat": 37.2, "lon": 127.2 } ]
+                }
+                """;
+        RidingCreateRequest request = objectMapper.readValue(json, RidingCreateRequest.class);
+
+        BusinessException ex = Assertions.catchThrowableOfType(
+                () -> ridingService.saveRiding(request, null),
+                BusinessException.class
+        );
+
+        Assertions.assertThat(ex.getCode()).isEqualTo(401);
+        Assertions.assertThat(ex.getMessage()).contains("인증");
+    }
+}

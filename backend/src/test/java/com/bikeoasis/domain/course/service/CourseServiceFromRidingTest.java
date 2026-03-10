@@ -99,7 +99,7 @@ class CourseServiceFromRidingTest {
                 """;
         CourseFromRidingCreateRequest request = objectMapper.readValue(json, CourseFromRidingCreateRequest.class);
 
-        Long courseId = courseService.createCourseFromRiding(request);
+        Long courseId = courseService.createCourseFromRiding(request, 10L);
 
         Assertions.assertThat(courseId).isEqualTo(100L);
 
@@ -111,5 +111,31 @@ class CourseServiceFromRidingTest {
 
         verify(courseGpxStorage).store(eq(saved), any(String.class));
     }
-}
 
+    @Test
+    void createCourseFromRiding_throws403WhenRequesterIsNotOwner() throws Exception {
+        LineString ridingPath = geometryFactory.createLineString(new Coordinate[]{
+                new Coordinate(127.1, 37.1),
+                new Coordinate(127.2, 37.2)
+        });
+
+        Riding riding = Riding.builder()
+                .id(1L)
+                .userId(10L)
+                .deviceUuid("device-1")
+                .title("ride")
+                .pathData(ridingPath)
+                .build();
+
+        when(ridingRepository.findById(1L)).thenReturn(Optional.of(riding));
+
+        String json = """
+                { "ridingId": 1, "title": "코스화 테스트" }
+                """;
+        CourseFromRidingCreateRequest request = objectMapper.readValue(json, CourseFromRidingCreateRequest.class);
+
+        Assertions.assertThatThrownBy(() -> courseService.createCourseFromRiding(request, 99L))
+                .isInstanceOf(com.bikeoasis.global.error.BusinessException.class)
+                .hasMessageContaining("라이딩 소유자");
+    }
+}

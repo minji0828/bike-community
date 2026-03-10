@@ -1,4 +1,4 @@
-# GitHub Secrets 설정 가이드 (MVP1)
+# CI/CD 시크릿 설정 가이드 (MVP1)
 
 `deploy-prod.yml` 사용을 위해 아래 Secrets를 GitHub 저장소에 설정합니다.
 

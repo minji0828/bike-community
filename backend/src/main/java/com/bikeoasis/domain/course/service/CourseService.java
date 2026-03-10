@@ -68,7 +68,8 @@ public class CourseService {
     private final CourseGpxStorage courseGpxStorage;
 
     @Transactional
-    public Long createCourse(CourseCreateRequest request) {
+    public Long createCourse(CourseCreateRequest request, Long requesterUserId) {
+        Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         validateCreateRequest(request);
 
         LineString lineString = toLineString(request.getPath());
@@ -80,7 +81,7 @@ public class CourseService {
         CourseSourceType sourceType = parseSourceType(request.getSourceType());
 
         Course course = Course.builder()
-                .ownerUserId(request.getOwnerUserId())
+                .ownerUserId(resolvedRequesterUserId)
                 .deviceUuid(request.getDeviceUuid())
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -106,7 +107,8 @@ public class CourseService {
     }
 
     @Transactional
-    public Long createCourseFromGpx(CourseGpxCreateRequest request) {
+    public Long createCourseFromGpx(CourseGpxCreateRequest request, Long requesterUserId) {
+        Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         if (request == null || request.getGpxXml() == null || request.getGpxXml().isBlank()) {
             throw new BusinessException(400, "gpxXml은 필수입니다.");
         }
@@ -130,7 +132,7 @@ public class CourseService {
 
         CourseSourceType sourceType = parseSourceType(request.getSourceType());
         Course course = Course.builder()
-                .ownerUserId(request.getOwnerUserId())
+                .ownerUserId(resolvedRequesterUserId)
                 .deviceUuid(request.getDeviceUuid())
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -152,7 +154,8 @@ public class CourseService {
     }
 
     @Transactional
-    public Long createCourseFromRiding(CourseFromRidingCreateRequest request) {
+    public Long createCourseFromRiding(CourseFromRidingCreateRequest request, Long requesterUserId) {
+        Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         if (request == null) {
             throw new BusinessException(400, "요청 본문이 필요합니다.");
         }
@@ -165,6 +168,10 @@ public class CourseService {
 
         Riding riding = ridingRepository.findById(request.getRidingId())
                 .orElseThrow(() -> new BusinessException(404, "라이딩을 찾을 수 없습니다."));
+
+        if (riding.getUserId() == null || !riding.getUserId().equals(resolvedRequesterUserId)) {
+            throw new BusinessException(403, "라이딩 소유자만 코스를 생성할 수 있습니다.");
+        }
 
         if (riding.getPathData() == null || riding.getPathData().getCoordinates() == null || riding.getPathData().getCoordinates().length < 2) {
             throw new BusinessException(400, "라이딩 경로 데이터가 부족합니다.");
@@ -184,7 +191,7 @@ public class CourseService {
                 : request.getNotes();
 
         Course course = Course.builder()
-                .ownerUserId(riding.getUserId())
+                .ownerUserId(resolvedRequesterUserId)
                 .deviceUuid(riding.getDeviceUuid())
                 .title(request.getTitle())
                 .description(description)
@@ -371,6 +378,13 @@ public class CourseService {
         if (request.getPath() == null || request.getPath().size() < 2) {
             throw new BusinessException(400, "path는 최소 2개 좌표가 필요합니다.");
         }
+    }
+
+    private Long requireRequesterUserId(Long requesterUserId) {
+        if (requesterUserId == null) {
+            throw new BusinessException(401, "인증이 필요합니다.");
+        }
+        return requesterUserId;
     }
 
     private LineString toLineString(List<CourseCreateRequest.PointDto> points) {

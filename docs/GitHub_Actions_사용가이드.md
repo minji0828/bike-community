@@ -1,4 +1,4 @@
-# GitHub Actions 사용법 (MVP1 배포 기준)
+# GitHub Actions 사용 가이드 (MVP1 배포 기준)
 
 ## 워크플로 구성
 - `ci-backend.yml`: backend 테스트

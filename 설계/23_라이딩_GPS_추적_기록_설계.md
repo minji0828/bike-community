@@ -128,7 +128,6 @@ Request (예시)
 ```json
 {
   "deviceUuid": "device-uuid",
-  "userId": 1,
   "title": "아침 라이딩",
   "totalDistance": 12000.3,
   "totalTime": 3600,
@@ -142,8 +141,8 @@ Request (예시)
 
 Response
 
-- 현재 구현: `ridingId` 숫자(Long)를 plain text/json number로 반환
-- 권장 표준: `ApiResponse<{ridingId}>` (추후 통일)
+- 현재 구현: `ApiResponse<{ridingId}>`
+- 소유권은 서비스 JWT의 `sub`에서 추출하며, 클라이언트는 `userId`를 보내지 않는다.
 
 ### 3.2 코스 생성(라이딩 기반)
 

@@ -9,6 +9,20 @@ export interface Course {
   thumbnail: string
   path: { lat: number; lng: number }[]
   pois: POI[]
+  tags?: string[]
+  visibility?: string
+  sourceType?: string
+  verifiedStatus?: string
+  loop?: boolean
+  warnings?: Array<{
+    type: string
+    severity: number
+    lat: number | null
+    lon: number | null
+    radiusM: number | null
+    note: string | null
+    validUntil: string | null
+  }>
 }
 
 export interface POI {

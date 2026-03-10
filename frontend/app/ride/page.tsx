@@ -20,7 +20,7 @@ type RidePoint = GeoPoint & {
 
 export default function RidePage() {
   const router = useRouter()
-  const { user, token } = useAuth()
+  const { token } = useAuth()
   const watchIdRef = useRef<number | null>(null)
   const [rideState, setRideState] = useState<RideState>('idle')
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -29,14 +29,6 @@ export default function RidePage() {
   const [currentLocation, setCurrentLocation] = useState<GeoPoint | null>(null)
   const [rideError, setRideError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const numericUserId = useMemo(() => {
-    if (!user?.userId) {
-      return undefined
-    }
-    const parsed = Number(user.userId)
-    return Number.isFinite(parsed) ? parsed : undefined
-  }, [user?.userId])
-
   useEffect(() => {
     if (rideState !== 'recording') {
       return
@@ -176,6 +168,12 @@ export default function RidePage() {
       return
     }
 
+    if (!token) {
+      setRideError('로그인 후 라이딩을 저장할 수 있습니다.')
+      router.push('/profile')
+      return
+    }
+
     try {
       setIsSaving(true)
       setRideError(null)
@@ -185,7 +183,6 @@ export default function RidePage() {
 
       const riding = await createRiding({
         deviceUuid: getOrCreateDeviceUuid(),
-        userId: numericUserId,
         title,
         totalDistance: Number(distance.toFixed(3)),
         totalTime: elapsedTime,

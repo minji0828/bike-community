@@ -52,6 +52,19 @@ export async function getCourseDetail(courseId: number) {
   })
 }
 
+export async function getPublicCourse(shareId: string) {
+  return apiFetch<CourseDetailApiResponse>(`/api/v1/courses/public/${shareId}`, {
+    method: 'GET',
+  })
+}
+
+export async function issueCourseShare(courseId: number, token: string) {
+  return apiFetch<{ shareId: string }>(`/api/v1/courses/${courseId}/share`, {
+    method: 'POST',
+    token,
+  })
+}
+
 export function toCourseCardModel(course: FeaturedCourseResponse): Course {
   const distance = Number((course.distanceKm ?? 0).toFixed(1))
   return {
@@ -90,5 +103,11 @@ export function toCourseDetailModel(course: CourseDetailApiResponse): Course {
       lng: point.lon,
     })),
     pois: [],
+    tags: course.tags,
+    visibility: course.visibility,
+    sourceType: course.sourceType,
+    verifiedStatus: course.verifiedStatus,
+    loop: course.loop ?? undefined,
+    warnings: course.warnings,
   }
 }

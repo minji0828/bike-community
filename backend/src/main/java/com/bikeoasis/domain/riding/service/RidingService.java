@@ -26,7 +26,8 @@ public class RidingService {
     private final GeometryFactory geometryFactory;
 
     @Transactional
-    public Long saveRiding(RidingCreateRequest request) {
+    public Long saveRiding(RidingCreateRequest request, Long requesterUserId) {
+        Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         if (request == null) {
             throw new BusinessException(400, "요청 본문이 필요합니다.");
         }
@@ -52,7 +53,7 @@ public class RidingService {
         // 3. 엔티티 빌드 및 저장
         Riding riding = Riding.builder()
                 .deviceUuid(request.getDeviceUuid())
-                .userId(request.getUserId())
+                .userId(resolvedRequesterUserId)
                 .title(request.getTitle())
                 .totalDistance(request.getTotalDistance())
                 .totalTime(request.getTotalTime())
@@ -61,6 +62,13 @@ public class RidingService {
                 .build();
 
         return ridingRepository.save(riding).getId();
+    }
+
+    private Long requireRequesterUserId(Long requesterUserId) {
+        if (requesterUserId == null) {
+            throw new BusinessException(401, "인증이 필요합니다.");
+        }
+        return requesterUserId;
     }
 
     private void validateLatLon(double lat, double lon) {

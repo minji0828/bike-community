@@ -1,4 +1,4 @@
-# Local Backend + PostGIS 실행 가이드
+# 백엔드 로컬 PostGIS 실행 가이드
 
 ## 1) PostGIS 컨테이너 실행
 ```bash

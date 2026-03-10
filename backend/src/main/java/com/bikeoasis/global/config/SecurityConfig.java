@@ -24,6 +24,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // 테스트를 위해 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/api/v1/ridings").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/courses").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/courses/from-riding").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/courses/gpx").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/comments").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/share").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/*/meetups").authenticated()

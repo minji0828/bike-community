@@ -1,5 +1,6 @@
 package com.bikeoasis.domain.riding.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,9 +11,9 @@ import java.util.List;
  */
 @Getter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RidingCreateRequest {
     private String deviceUuid;
-    private Long userId;
     private String title;
     private Double totalDistance;
     private Integer totalTime;

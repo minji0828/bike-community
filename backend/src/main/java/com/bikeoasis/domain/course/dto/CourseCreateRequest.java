@@ -1,5 +1,6 @@
 package com.bikeoasis.domain.course.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,8 +13,8 @@ import java.util.List;
  */
 @Getter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CourseCreateRequest {
-    private Long ownerUserId;
     private String deviceUuid;
     private String title;
     private String description;

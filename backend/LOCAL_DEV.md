@@ -1,6 +1,6 @@
 # Backend 로컬 개발 실행 가이드
 
-> 저장소 전체 기준 실행 문서는 `docs/local-dev-runbook.md` 입니다.  
+> 저장소 전체 기준 실행 문서는 `docs/로컬_개발_실행가이드.md` 입니다.
 > 이 문서는 **백엔드 전용 보조 메모**만 담습니다.
 
 로컬에서 **PostgreSQL/PostGIS(Docker)** + **Spring Boot(Gradle)** 를 바로 띄우는 절차입니다.

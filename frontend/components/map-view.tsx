@@ -60,6 +60,7 @@ interface MapViewProps {
   routePath?: MapCoordinate[]
   currentLocation?: MapCoordinate | null
   center?: MapCoordinate | null
+  focusCurrentLocation?: boolean
   level?: number
   fitBoundsPadding?: {
     top?: number
@@ -74,18 +75,19 @@ export function MapView({
   showRoute = false,
   pois = [],
   showCurrentLocation = true,
-  progress: _progress = 0,
+  progress = 0,
   routePath = [],
   currentLocation = null,
   center = null,
+  focusCurrentLocation = false,
   level = 5,
   fitBoundsPadding,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<unknown | null>(null)
-  const overlaysRef = useRef<{ markers: Array<{ setMap: (map: unknown | null) => void }>; polyline: { setMap: (map: unknown | null) => void } | null }>({
+  const overlaysRef = useRef<{ markers: Array<{ setMap: (map: unknown | null) => void }>; polylines: Array<{ setMap: (map: unknown | null) => void }> }>({
     markers: [],
-    polyline: null,
+    polylines: [],
   })
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const [isReady, setIsReady] = useState(false)
@@ -158,10 +160,10 @@ export function MapView({
       relayout: () => void
     }
 
-    overlaysRef.current.polyline?.setMap(null)
+    overlaysRef.current.polylines.forEach((polyline) => polyline.setMap(null))
     overlaysRef.current.markers.forEach((marker) => marker.setMap(null))
     overlaysRef.current.markers = []
-    overlaysRef.current.polyline = null
+    overlaysRef.current.polylines = []
 
     const bounds = new maps.LatLngBounds()
     let hasBounds = false
@@ -176,14 +178,45 @@ export function MapView({
         extendBounds(point)
         return new maps.LatLng(point.lat, point.lng)
       })
-      overlaysRef.current.polyline = new maps.Polyline({
-        map,
-        path,
-        strokeWeight: 5,
-        strokeColor: '#10b981',
-        strokeOpacity: 0.9,
-        strokeStyle: 'solid',
-      })
+      const progressIndex = Math.max(1, Math.min(routePath.length - 1, Math.round((routePath.length - 1) * (progress / 100))))
+
+      if (progress > 0 && progress < 100) {
+        const completedPath = routePath.slice(0, progressIndex + 1).map((point) => new maps.LatLng(point.lat, point.lng))
+        const remainingPath = routePath.slice(Math.max(0, progressIndex - 1)).map((point) => new maps.LatLng(point.lat, point.lng))
+
+        overlaysRef.current.polylines.push(
+          new maps.Polyline({
+            map,
+            path: remainingPath,
+            strokeWeight: 5,
+            strokeColor: '#cbd5e1',
+            strokeOpacity: 0.95,
+            strokeStyle: 'solid',
+          })
+        )
+
+        overlaysRef.current.polylines.push(
+          new maps.Polyline({
+            map,
+            path: completedPath,
+            strokeWeight: 6,
+            strokeColor: '#10b981',
+            strokeOpacity: 0.95,
+            strokeStyle: 'solid',
+          })
+        )
+      } else {
+        overlaysRef.current.polylines.push(
+          new maps.Polyline({
+            map,
+            path,
+            strokeWeight: 5,
+            strokeColor: '#10b981',
+            strokeOpacity: 0.9,
+            strokeStyle: 'solid',
+          })
+        )
+      }
     }
 
     pois.forEach((poi) => {
@@ -210,7 +243,9 @@ export function MapView({
 
     requestAnimationFrame(() => map.relayout())
 
-    if (hasBounds) {
+    if (focusCurrentLocation && currentLocation) {
+      map.setCenter(new maps.LatLng(currentLocation.lat, currentLocation.lng))
+    } else if (hasBounds) {
       map.setBounds(bounds, resolvedPadding.top, resolvedPadding.right, resolvedPadding.bottom, resolvedPadding.left)
     } else {
       map.setCenter(new maps.LatLng(resolvedCenter.lat, resolvedCenter.lng))
@@ -222,17 +257,17 @@ export function MapView({
       })
       resizeObserverRef.current.observe(containerRef.current)
     }
-  }, [center, currentLocation, isReady, level, pois, resolvedCenter, resolvedPadding, routePath, showCurrentLocation, showRoute])
+  }, [center, currentLocation, focusCurrentLocation, isReady, level, pois, progress, resolvedCenter, resolvedPadding, routePath, showCurrentLocation, showRoute])
 
   useEffect(() => {
     const overlays = overlaysRef.current
     const resizeObserver = resizeObserverRef.current
 
     return () => {
-      overlays.polyline?.setMap(null)
+      overlays.polylines.forEach((polyline) => polyline.setMap(null))
       overlays.markers.forEach((marker) => marker.setMap(null))
       overlays.markers = []
-      overlays.polyline = null
+      overlays.polylines = []
       resizeObserver?.disconnect()
       resizeObserverRef.current = null
       mapRef.current = null

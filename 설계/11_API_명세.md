@@ -139,7 +139,6 @@ Request: `RidingCreateRequest`
 ```json
 {
   "deviceUuid": "device-uuid",
-  "userId": 1,
   "title": "아침 라이딩",
   "totalDistance": 12000.3,
   "totalTime": 3600,
@@ -160,7 +159,7 @@ Response (권장)
 현재 구현 메모:
 
 - 서버는 `ApiResponse` 래핑 형태를 기본으로 반환한다.
-- 모바일 클라이언트는 과거 plain number 응답과의 호환 파서를 유지한다.
+- 소유권은 `Authorization: Bearer <service-jwt>`의 `sub`에서 결정하며 `userId`는 요청 바디로 받지 않는다.
 
 ## 3. Location API
 
@@ -235,6 +234,7 @@ Response
 ### 4.1 코스 생성(라이딩 기반)
 
 - POST `/api/v1/courses/from-riding`
+- Header: `Authorization: Bearer <service-access-token>`
 
 Request
 
