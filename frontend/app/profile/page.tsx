@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { Settings, ChevronRight, Route, Clock, Zap, Heart } from 'lucide-react'
 import { useAuth } from '@/components/auth/auth-provider'
@@ -12,7 +11,7 @@ import { CourseCard } from '@/components/course-card'
 import { sampleCourses, sampleRides } from '@/lib/sample-data'
 
 export default function ProfilePage() {
-  const { isAuthenticated, logout, user, authError: providerAuthError } = useAuth()
+  const { isAuthenticated, logout, user, authError: providerAuthError, startKakaoLogin } = useAuth()
   const [authError, setAuthError] = useState<string | null>(null)
   const [loginErrorMessage, setLoginErrorMessage] = useState<string | null>(null)
 
@@ -113,10 +112,18 @@ export default function ProfilePage() {
                 </Button>
               </div>
             ) : (
-              <Button asChild className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]">
-                <Link href="/auth/kakao/start" onClick={() => setAuthError(null)}>
-                  카카오로 로그인
-                </Link>
+              <Button
+                className="w-full rounded-full bg-[#FEE500] text-black hover:bg-[#f7da00]"
+                onClick={async () => {
+                  setAuthError(null)
+                  try {
+                    await startKakaoLogin()
+                  } catch (error) {
+                    setAuthError(error instanceof Error ? error.message : '카카오 로그인을 시작하지 못했습니다.')
+                  }
+                }}
+              >
+                카카오로 로그인
               </Button>
             )}
           </CardContent>
