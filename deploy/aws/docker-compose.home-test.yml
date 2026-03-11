@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: bikeoasis-postgres-home
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bikeoasis}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - bikeoasis-postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: bikeoasis-backend-home
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    env_file:
+      - ./env.home-test.example
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bikeoasis}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      COURSE_GPX_STORAGE_MODE: db
+      POI_FETCH_ONSTARTUP: "true"
+      COURSE_SEED_GPX_ONSTARTUP: "true"
+    ports:
+      - "8080:8080"
+
+volumes:
+  bikeoasis-postgres-data:

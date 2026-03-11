@@ -20,7 +20,11 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '')
+  const apiBaseUrl = (
+    process.env.INTERNAL_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:8080'
+  ).replace(/\/$/, '')
 
   try {
     const backendResponse = await fetch(`${apiBaseUrl}/api/v1/auth/me`, {

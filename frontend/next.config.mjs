@@ -5,6 +5,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
 const apiWsUrl = apiBaseUrl.replace(/^http/i, 'ws')
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const backendProxyOrigin = process.env.BACKEND_PROXY_ORIGIN?.replace(/\/$/, '')
 const scriptSrc = [
   "'self'",
   "'unsafe-inline'",
@@ -46,6 +47,18 @@ const nextConfig = {
   },
   turbopack: {
     root: __dirname,
+  },
+  async rewrites() {
+    if (!backendProxyOrigin) {
+      return []
+    }
+
+    return [
+      {
+        source: '/backend/:path*',
+        destination: `${backendProxyOrigin}/:path*`,
+      },
+    ]
   },
   async headers() {
     return [
