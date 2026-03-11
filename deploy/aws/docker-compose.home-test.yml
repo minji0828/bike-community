@@ -21,7 +21,7 @@ services:
       - postgres
     restart: unless-stopped
     env_file:
-      - ./env.home-test.example
+      - ./.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bikeoasis}
