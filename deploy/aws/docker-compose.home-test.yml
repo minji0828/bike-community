@@ -24,12 +24,13 @@ services:
       - ./.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bikeoasis}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       COURSE_GPX_STORAGE_MODE: db
-      POI_FETCH_ONSTARTUP: "true"
-      COURSE_SEED_GPX_ONSTARTUP: "true"
+      POI_FETCH_ONSTARTUP: "false"
+      COURSE_SEED_GPX_ONSTARTUP: "false"
     ports:
       - "8080:8080"
 
