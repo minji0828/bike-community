@@ -22,6 +22,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./.env
+    volumes:
+      - ../../설계:/app/설계:ro
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -30,7 +32,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       COURSE_GPX_STORAGE_MODE: db
       POI_FETCH_ONSTARTUP: "false"
-      COURSE_SEED_GPX_ONSTARTUP: "false"
+      COURSE_SEED_GPX_ONSTARTUP: "true"
     ports:
       - "8080:8080"
 
