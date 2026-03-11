@@ -27,10 +27,12 @@ public class RidingService {
 
     @Transactional
     public Long saveRiding(RidingCreateRequest request, Long requesterUserId) {
+        // RID-P-001, RID-P-002: 라이딩 저장은 인증 사용자만 가능하며 소유권은 JWT sub로 확정한다.
         Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         if (request == null) {
             throw new BusinessException(400, "요청 본문이 필요합니다.");
         }
+        // RID-P-003, RID-P-004: deviceUuid는 필수이고 path는 최소 2개 좌표가 필요하다.
         if (request.getDeviceUuid() == null || request.getDeviceUuid().isBlank()) {
             throw new BusinessException(400, "deviceUuid는 필수입니다.");
         }
@@ -38,19 +40,17 @@ public class RidingService {
             throw new BusinessException(400, "path는 최소 2개 좌표가 필요합니다.");
         }
 
-        // 1. DTO의 좌표 리스트를 JTS Coordinate 배열로 변환
+        // RID-P-005, RID-P-006: 좌표 범위를 검증하고 내부 지오메트리는 항상 (lon, lat) 순서로 만든다.
         Coordinate[] coordinates = request.getPath().stream()
                 .map(p -> {
                     validateLatLon(p.getLat(), p.getLon());
-                    return new Coordinate(p.getLon(), p.getLat()); // (lon, lat) 순서 주의!
+                    return new Coordinate(p.getLon(), p.getLat());
                 })
                 .toArray(Coordinate[]::new);
 
-        // 2. LineString 생성
         LineString lineString = geometryFactory.createLineString(coordinates);
         lineString.setSRID(SRID_WGS84);
 
-        // 3. 엔티티 빌드 및 저장
         Riding riding = Riding.builder()
                 .deviceUuid(request.getDeviceUuid())
                 .userId(resolvedRequesterUserId)

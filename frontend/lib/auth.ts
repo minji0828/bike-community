@@ -100,6 +100,7 @@ export function setStoredAccessToken(token: string) {
   if (!isBrowser()) {
     return
   }
+  // AUTH-P-004, AUTH-P-005: 프론트는 provider token이 아니라 service JWT만 저장소 유틸을 통해 보관한다.
   window.localStorage.setItem(ACCESS_TOKEN_KEY, token)
   setCookie(ACCESS_TOKEN_COOKIE_KEY, token, 60 * 60 * 24 * 7)
 }
@@ -151,6 +152,7 @@ export function saveKakaoLoginSession(session: KakaoLoginSession) {
   if (!isBrowser()) {
     return
   }
+  // AUTH-P-001: PKCE/state/nonce 세션은 로그인 왕복 동안만 유지한다.
   const serialized = JSON.stringify(session)
   window.sessionStorage.setItem(KAKAO_LOGIN_SESSION_KEY, serialized)
   setCookie(KAKAO_LOGIN_SESSION_COOKIE_KEY, serialized)

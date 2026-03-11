@@ -41,6 +41,7 @@ export type CourseDetailApiResponse = {
 }
 
 export async function getFeaturedCourses() {
+  // CRS-P-020, CRS-P-021: 피처드 목록은 공개 조회를 전제로 한다.
   return apiFetch<FeaturedCourseResponse[]>('/api/v1/courses/featured', {
     method: 'GET',
   })
@@ -53,12 +54,14 @@ export async function getCourseDetail(courseId: number) {
 }
 
 export async function getPublicCourse(shareId: string) {
+  // SHR-P-004, SHR-P-005: 공유 조회는 public/unlisted 코스만 허용된다는 서버 정책을 따른다.
   return apiFetch<CourseDetailApiResponse>(`/api/v1/courses/public/${shareId}`, {
     method: 'GET',
   })
 }
 
 export async function issueCourseShare(courseId: number, token: string) {
+  // SHR-P-001, SHR-P-003: 공유 발급은 인증된 소유자만 가능하고 기존 shareId는 재사용된다.
   return apiFetch<{ shareId: string }>(`/api/v1/courses/${courseId}/share`, {
     method: 'POST',
     token,

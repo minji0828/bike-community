@@ -69,7 +69,9 @@ public class CourseService {
 
     @Transactional
     public Long createCourse(CourseCreateRequest request, Long requesterUserId) {
+        // CRS-P-001, CRS-P-002: 코스 생성은 인증 사용자만 가능하며 소유권은 JWT sub로 확정한다.
         Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
+        // CRS-P-006: path는 최소 2개 좌표가 필요하다.
         validateCreateRequest(request);
 
         LineString lineString = toLineString(request.getPath());
@@ -78,6 +80,7 @@ public class CourseService {
         boolean loop = computeLoop(lineString.getCoordinates());
         int estimatedDurationMin = (int) Math.max(1, Math.round((distanceKm / DEFAULT_AVG_SPEED_KMH) * 60.0));
 
+        // CRS-P-004, CRS-P-005, CRS-P-007: sourceType 기본값과 verified 상태, 파생 메타데이터는 서버가 결정한다.
         CourseSourceType sourceType = parseSourceType(request.getSourceType());
 
         Course course = Course.builder()
@@ -101,6 +104,7 @@ public class CourseService {
         Course saved = courseRepository.save(course);
         String gpxXml = buildGpxFromCoordinates(request.getTitle(), lineString.getCoordinates());
         courseGpxStorage.store(saved, gpxXml);
+        // CRS-P-008, CRS-P-009: 태그 정규화와 경고 저장은 코스 생성 플로우 안에서 함께 처리한다.
         saveTags(saved, request.getTags());
         saveWarnings(saved, request.getWarnings());
         return saved.getId();
@@ -108,6 +112,7 @@ public class CourseService {
 
     @Transactional
     public Long createCourseFromGpx(CourseGpxCreateRequest request, Long requesterUserId) {
+        // CRS-P-001, CRS-P-002: GPX 업로드 코스 생성도 인증 사용자 소유로만 허용한다.
         Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         if (request == null || request.getGpxXml() == null || request.getGpxXml().isBlank()) {
             throw new BusinessException(400, "gpxXml은 필수입니다.");
@@ -155,6 +160,7 @@ public class CourseService {
 
     @Transactional
     public Long createCourseFromRiding(CourseFromRidingCreateRequest request, Long requesterUserId) {
+        // CRS-P-010, CRS-P-011: 라이딩 기반 코스 생성은 본인 라이딩에서만 가능하다.
         Long resolvedRequesterUserId = requireRequesterUserId(requesterUserId);
         if (request == null) {
             throw new BusinessException(400, "요청 본문이 필요합니다.");
@@ -173,6 +179,7 @@ public class CourseService {
             throw new BusinessException(403, "라이딩 소유자만 코스를 생성할 수 있습니다.");
         }
 
+        // CRS-P-012: 원본 라이딩 path 품질이 부족하면 코스 생성은 실패한다.
         if (riding.getPathData() == null || riding.getPathData().getCoordinates() == null || riding.getPathData().getCoordinates().length < 2) {
             throw new BusinessException(400, "라이딩 경로 데이터가 부족합니다.");
         }
@@ -186,6 +193,7 @@ public class CourseService {
         int estimatedDurationMin = (int) Math.max(1, Math.round((distanceKm / DEFAULT_AVG_SPEED_KMH) * 60.0));
 
         CourseSourceType sourceType = parseSourceType(request.getSourceType());
+        // CRS-P-013: description 미입력 시 notes를 설명 대체값으로 사용한다.
         String description = (request.getDescription() != null && !request.getDescription().isBlank())
                 ? request.getDescription()
                 : request.getNotes();
@@ -262,6 +270,7 @@ public class CourseService {
     }
 
     public List<CourseFeaturedResponse> getFeaturedCourses(String region) {
+        // CRS-P-020, CRS-P-021: 피처드 목록은 featuredRank가 있는 코스만 공개 조회한다.
         List<Course> courses = courseRepository.findByFeaturedRankNotNullOrderByFeaturedRankAsc();
         return courses.stream()
                 .map(course -> new CourseFeaturedResponse(
@@ -281,6 +290,7 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(404, "코스를 찾을 수 없습니다."));
 
+        // SHR-P-001, SHR-P-002: 공유 링크 발급은 인증된 소유자만 가능하다.
         if (requesterUserId == null) {
             throw new BusinessException(401, "인증이 필요합니다.");
         }
@@ -293,6 +303,7 @@ public class CourseService {
             throw new BusinessException(403, "코스 소유자만 공유 링크를 발급할 수 있습니다.");
         }
 
+        // SHR-P-003: 기존 shareId가 있으면 재사용하고, 없을 때만 새로 생성한다.
         if (course.getShareId() == null || course.getShareId().isBlank()) {
             course.setShareId(generateUniqueShareId());
         }
@@ -300,6 +311,7 @@ public class CourseService {
     }
 
     public CourseDetailResponse getPublicCourse(String shareId) {
+        // SHR-P-004, SHR-P-005, SHR-P-006: public/unlisted만 공유 조회를 허용하고 나머지는 404로 통일한다.
         Course course = courseRepository.findByShareIdAndVisibilityIn(
                         shareId,
                         List.of(CourseVisibility.PUBLIC, CourseVisibility.UNLISTED)
@@ -316,6 +328,7 @@ public class CourseService {
     }
 
     public String getPublicCourseGpx(String shareId) {
+        // SHR-P-007: 공유 GPX 다운로드도 동일한 공개 범위 정책을 따른다.
         Course course = courseRepository.findByShareIdAndVisibilityIn(
                         shareId,
                         List.of(CourseVisibility.PUBLIC, CourseVisibility.UNLISTED)
@@ -422,6 +435,7 @@ public class CourseService {
     }
 
     private void saveTags(Course course, List<String> tagKeys) {
+        // CRS-P-008: 태그는 trim/lowercase/distinct로 정규화한 뒤 저장한다.
         if (tagKeys == null || tagKeys.isEmpty()) {
             return;
         }

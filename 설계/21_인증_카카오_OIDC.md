@@ -1,174 +1,149 @@
 # 인증 설계: 카카오 소셜 로그인(OAuth2 + OIDC)
 
 - 문서 ID: AUTH-KAKAO-OIDC
-- 버전: v0.1
-- 작성일: 2026-03-04
-- 상태: 초안(MVP2)
+- 버전: v1.0
+- 작성일: 2026-03-11
+- 상태: 활성
 
 목적:
 
-- MVP2에서 "댓글 작성" 같은 write 기능을 위해 최소 인증을 도입한다.
-- 사용성(유저 편의)을 최우선으로 카카오 소셜 로그인만 지원한다.
+- 모바일 1차 클라이언트와 현재 저장소 웹 구현체가 같은 카카오 로그인 계약을 공유하도록 한다.
+- 서버는 카카오 code 교환과 `id_token` 검증을 담당하고, 클라이언트는 PKCE 시작과 state/nonce 관리를 담당한다.
 
 관련 문서:
 
-- MVP2 스코프: `설계/17_MVP2_요구사항정의서.md`
-- 커뮤니티 API: `설계/19_MVP2_커뮤니티_API_명세.md`
-- 기술 레지스트리: `설계/15_기술스택_레지스트리.md`
+- `docs/04_API_상태계약.md`
+- `설계/35_모바일_클라이언트_개발_가이드.md`
+- `설계/29_프론트엔드_개발_가이드.md`
+- `설계/adr/frontend/0002-kakao-auth-via-next-routes-and-backend-jwt.md`
 
 ---
 
-## 0. 왜 OIDC인가
+## 0. 기본 결정
 
-- OAuth2만으로도 가능하지만, OIDC의 `id_token(JWT)`는 "로그인" 관점에서 표준화된 사용자 식별(sub)과 검증 방법(JWKS)을 제공한다.
-- 클라이언트(RN) 입장에서는 카카오 계정으로 원클릭 로그인 UX를 만들 수 있다.
-
----
-
-## 1. 권장 플로우(React Native)
-
-### 1.1 Authorization Code + PKCE
-
-원칙:
-
-- RN은 public client이므로 client_secret을 앱에 넣지 않는다.
-- PKCE(S256)로 code 탈취 리스크를 줄인다.
-
-흐름(요약):
-
-1) RN: `code_verifier`/`code_challenge` 생성
-2) RN: 카카오 authorize로 이동(state 포함)
-3) RN: redirect/deeplink로 authorization `code` 수신
-4) RN -> 서버: `code`(+ `code_verifier` + redirectUri) 전달
-5) 서버 -> 카카오: token endpoint로 code 교환
-6) 서버: `id_token` 검증(iss/aud/signature/exp)
-7) 서버: 서비스용 access token 발급(JWT 권장)
+- 제품의 1차 클라이언트는 모바일 앱이다.
+- 현재 저장소 웹 앱도 같은 백엔드 인증 API를 사용한다.
+- 인증 방식은 Authorization Code + PKCE를 기본으로 한다.
+- 서버가 카카오 `id_token`을 검증하고, 서비스용 JWT를 발급한다.
+- 일반 API 호출에는 카카오 access token이 아니라 서비스 JWT만 사용한다.
 
 ---
 
-## 2. 서버 책임(검증)
+## 1. 왜 OIDC인가
 
-### 2.1 id_token 검증 체크
+- OAuth2만으로도 인가 코드를 교환할 수 있지만, OIDC의 `id_token`은 로그인 관점의 표준 claim과 JWKS 검증 체계를 제공한다.
+- `sub`를 서비스 내 provider 식별자로 고정할 수 있다.
+- 닉네임 같은 프로필 값도 최소한으로 가져올 수 있다.
+
+---
+
+## 2. 권장 플로우
+
+### 2.1 모바일 기준 플로우
+
+1. 모바일 앱이 `code_verifier`, `code_challenge`, `state`, `nonce`를 생성한다.
+2. 카카오 authorize로 이동한다.
+3. 앱 딥링크/리다이렉트로 `code`를 수신한다.
+4. 앱이 백엔드 `POST /api/v1/auth/kakao`로 `code`, `codeVerifier`, `redirectUri`, `nonce`를 전달한다.
+5. 백엔드가 카카오 token endpoint와 통신해 토큰을 교환한다.
+6. 백엔드가 `id_token`을 검증한다.
+7. 백엔드가 서비스 JWT를 발급한다.
+8. 앱은 secure storage에 서비스 JWT를 저장하고 `/api/v1/auth/me`로 재검증한다.
+
+### 2.2 현재 저장소 웹 기준 플로우
+
+1. 웹 앱이 same-origin route에서 PKCE/state/nonce를 준비한다.
+2. 브라우저가 카카오 authorize로 이동한다.
+3. callback route가 `code`와 `state`를 수신한다.
+4. 웹 앱이 백엔드 `POST /api/v1/auth/kakao`를 호출한다.
+5. 이후 흐름은 모바일과 동일하다.
+
+---
+
+## 3. 서버 책임
+
+### 3.1 `id_token` 검증
 
 - Signature: Kakao JWKS로 검증
-- Issuer(iss): `https://kauth.kakao.com`
-- Audience(aud): 카카오 REST API Key(client_id)
-- Expiration(exp): 만료 확인
-- Nonce: 사용했다면 일치 확인(선택)
-  - 메모: RN이 nonce를 사용한다면, 서버로 nonce를 함께 전달해 id_token의 `nonce`와 대조한다.
+- Issuer: `https://kauth.kakao.com`
+- Audience: 카카오 client id
+- Expiration: `exp` 검증
+- Nonce: 클라이언트가 보냈다면 일치 검증
 
-근거(공식):
+### 3.2 redirectUri 검증
 
-- Kakao Login REST API: https://developers.kakao.com/docs/latest/en/kakaologin/rest-api
-- OIDC discovery: https://kauth.kakao.com/.well-known/openid-configuration
+- 허용된 redirectUri 목록과 비교한다.
+- 목록에 없는 redirectUri는 즉시 실패시킨다.
 
----
+### 3.3 사용자 업서트
 
-## 3. 서비스 토큰(우리 API 보호)
-
-MVP2 권장:
-
-- 서버가 JWT(access token)를 발급
-- RN은 `Authorization: Bearer <token>`으로 write API 호출
-
-대안:
-
-- 세션 쿠키: 모바일에서는 관리가 번거롭고 CORS/세션 만료 UX가 어려울 수 있음
+- `provider=KAKAO`, `providerSub=sub` 조합으로 사용자를 찾는다.
+- 없으면 신규 사용자를 만든다.
+- 닉네임이 비어 있으면 기본값으로 대체한다.
 
 ---
 
-## 4. 사용자 모델 매핑(초안)
+## 4. 서비스 토큰 정책
 
-현재 User 엔티티가 email/password 기반이므로, 소셜 로그인 최소 확장을 권장한다.
+- 서비스 JWT에는 최소 `sub(userId)`를 담는다.
+- 프론트 초기 렌더 편의를 위해 `username`을 claim으로 담을 수 있다.
+- 모바일은 secure storage, 웹은 현재 구현체의 auth 저장소 유틸을 사용한다.
+- 일반 API는 `Authorization: Bearer <service-jwt>`로 호출한다.
 
-권장 필드(초안):
+### 4.1 인증 정책 코드
 
-- provider (enum: kakao)
-- provider_sub (unique) = OIDC `sub`
-- email (nullable)
-- username/displayName (nullable)
-
-정책:
-
-- 최초 로그인 시 user를 upsert
-- email이 없거나 비공개면 null 허용
-
-익명 표시(댓글):
-
-- 로그인은 "권한/스팸 방지" 목적이며, 댓글 작성자 정보는 공개하지 않는다.
-- 댓글 UI/API는 작성자를 항상 `익명`으로 표시한다.
+| 정책코드 | 항목 | 정책 정의 |
+|---|---|---|
+| AUTH-P-001 | 인증 방식 | 카카오 로그인은 Authorization Code + PKCE를 기본으로 한다. |
+| AUTH-P-002 | 서버 검증 | 백엔드는 `id_token`의 signature, iss, aud, exp, nonce를 검증한다. |
+| AUTH-P-003 | redirectUri 허용 목록 | 허용된 redirectUri만 code 교환을 수행한다. |
+| AUTH-P-004 | 서비스 토큰 | 일반 API 호출에는 서비스 JWT만 사용한다. |
+| AUTH-P-005 | 저장소 | 모바일은 secure storage, 웹은 auth 저장소 유틸을 사용한다. |
 
 ---
 
-## 5. API 초안(Auth)
+## 5. API 계약
 
-### 5.1 카카오 로그인 교환
+### 5.1 POST `/api/v1/auth/kakao`
 
-- POST `/api/v1/auth/kakao`
-
-Request
+Request:
 
 ```json
 {
-  "code": "...",
-  "codeVerifier": "...",
-  "redirectUri": "...",
-  "nonce": "..."
+  "code": "authorization-code",
+  "codeVerifier": "pkce-verifier",
+  "redirectUri": "bikeoasis://auth/kakao/callback",
+  "nonce": "random-nonce"
 }
 ```
 
-Response
+Response:
 
 ```json
 {
   "code": 200,
   "message": "success",
   "data": {
-    "accessToken": "...",
+    "accessToken": "service-jwt",
     "expiresInSec": 3600
   }
 }
 ```
 
-### 5.2 현재 로그인 사용자 조회
+### 5.2 GET `/api/v1/auth/me`
 
-- GET `/api/v1/auth/me`
-
-Header
-
-```http
-Authorization: Bearer <service-access-token>
-```
-
-Response
-
-```json
-{
-  "code": 200,
-  "message": "success",
-  "data": {
-    "userId": 1,
-    "username": "카카오 닉네임",
-    "provider": "KAKAO"
-  }
-}
-```
-
-메모:
-
-- 클라이언트는 로그인 직후 이 API로 실제 로그인 상태를 재검증한다.
-- 서비스 JWT에는 최소한 `sub(userId)`를 포함하고, 클라이언트 초기 렌더 편의를 위해 `username` claim을 함께 담을 수 있다.
+- 서비스 JWT가 유효한지와 현재 사용자 정보를 재검증한다.
 
 ---
 
 ## 6. 보안/운영 메모
 
-- state 필수(CSRF)
-- 토큰은 RN secure storage에 저장(AsyncStorage 금지)
-- 레이트리밋: auth 교환/댓글 작성에 적용
+- `state`는 필수다.
+- 모바일 앱에 client secret을 넣지 않는다.
+- 토큰/로그에는 원문 Kakao token을 남기지 않는다.
+- auth 교환 엔드포인트에는 rate limit을 적용한다.
 
-Spring 참고:
+근거:
 
-- Spring Security OAuth2 Login: https://docs.spring.io/spring-security/reference/servlet/oauth2/login/index.html
-- Spring Security OIDC: https://docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html#oauth2login-oidc
-- Spring Resource Server JWT: https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html
+- Kakao Login REST API: https://developers.kakao.com/docs/latest/en/kakaologin/rest-api
+- OIDC discovery: https://kauth.kakao.com/.well-known/openid-configuration

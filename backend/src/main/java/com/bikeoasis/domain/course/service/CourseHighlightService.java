@@ -36,6 +36,7 @@ public class CourseHighlightService {
             throw new BusinessException(404, "코스를 찾을 수 없습니다.");
         }
 
+        // HLT-P-001, HLT-P-003: 공개 하이라이트와 작성자 본인 private 하이라이트만 함께 조회한다.
         return courseHighlightRepository.findVisibleByCourseId(courseId, requesterUserId, CourseHighlightVisibility.PUBLIC)
                 .stream()
                 .map(highlight -> toResponse(highlight, requesterUserId))
@@ -44,6 +45,7 @@ public class CourseHighlightService {
 
     @Transactional
     public Long createHighlight(Long courseId, Long authorUserId, CourseHighlightCreateRequest request) {
+        // HLT-P-002, HLT-P-004, HLT-P-005, HLT-P-006: 생성 인증, 필수값, 좌표 검증, 기본 공개범위를 적용한다.
         validateCreateRequest(request);
 
         Course course = courseRepository.findById(courseId)
@@ -83,6 +85,7 @@ public class CourseHighlightService {
         if (request == null) {
             throw new BusinessException(400, "요청 본문이 필요합니다.");
         }
+        // HLT-P-004: type, 좌표, title 또는 note 중 하나는 반드시 필요하다.
         if (request.type() == null || request.type().isBlank()) {
             throw new BusinessException(400, "type은 필수입니다.");
         }

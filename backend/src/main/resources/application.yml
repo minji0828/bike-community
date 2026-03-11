@@ -1,3 +1,6 @@
+server:
+  port: ${PORT:8080}
+
 api:
   seoul:
     key: ${SEOUL_API_KEY:} # local/dev: set SEOUL_API_KEY env var
@@ -8,7 +11,7 @@ api:
 
 poi:
   fetch:
-    onstartup: true
+    onstartup: ${POI_FETCH_ONSTARTUP:true}
     page-size: 1000
     max-pages: 5
     mode: incremental  # "full" 또는 "incremental"
@@ -26,7 +29,7 @@ location:
 course:
   seed:
     gpx:
-      onstartup: true
+      onstartup: ${COURSE_SEED_GPX_ONSTARTUP:true}
       path: 설계/자료/동부5고개.gpx
       title: 동부5고개 (벗서명다유)
       featured-rank: 1
@@ -46,6 +49,7 @@ app:
     audience: ${APP_JWT_AUDIENCE:}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:}
   websocket:
     allowed-origin-patterns: ${APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS:http://localhost:3000,http://localhost:3001}
 

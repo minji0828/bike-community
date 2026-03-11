@@ -21,6 +21,9 @@ app:
     secret: "PUT-YOUR-APP-JWT-SECRET-32BYTES-MIN"
     # Optional: set to differentiate environments
     audience: "bikeoasis-mobile"
+  cors:
+    allowed-origins: "http://localhost:3000,http://localhost:3001"
+    allowed-origin-patterns: ""
 
 kakao:
   oauth:
@@ -36,3 +39,8 @@ admin:
 poi:
   fetch:
     onstartup: false
+
+course:
+  seed:
+    gpx:
+      onstartup: true

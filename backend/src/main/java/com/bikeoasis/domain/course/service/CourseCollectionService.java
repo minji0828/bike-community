@@ -34,6 +34,7 @@ public class CourseCollectionService {
 
     @Transactional
     public Long createCollection(Long ownerUserId, CourseCollectionCreateRequest request) {
+        // COL-P-001, COL-P-002: 컬렉션 생성은 인증 사용자만 가능하고 visibility 기본값은 private다.
         validateCreateRequest(request);
 
         CourseCollection collection = CourseCollection.builder()
@@ -51,11 +52,13 @@ public class CourseCollectionService {
     public List<CourseCollectionSummaryResponse> listCollections(boolean mine, Long requesterUserId) {
         List<CourseCollection> collections;
         if (mine) {
+            // COL-P-003: mine 목록은 인증 사용자만 조회할 수 있다.
             if (requesterUserId == null) {
                 throw new BusinessException(401, "인증이 필요합니다.");
             }
             collections = courseCollectionRepository.findByOwnerUserIdOrderByUpdatedAtDesc(requesterUserId);
         } else {
+            // COL-P-004: 공개 목록은 public 컬렉션만 노출한다.
             collections = courseCollectionRepository.findByVisibilityOrderByUpdatedAtDesc(CourseCollectionVisibility.PUBLIC);
         }
 
@@ -76,6 +79,7 @@ public class CourseCollectionService {
                 .orElseThrow(() -> new BusinessException(404, "컬렉션을 찾을 수 없습니다."));
 
         boolean mine = requesterUserId != null && requesterUserId.equals(collection.getOwnerUserId());
+        // COL-P-005: 비소유자는 private 컬렉션 상세를 볼 수 없다.
         if (!mine && collection.getVisibility() == CourseCollectionVisibility.PRIVATE) {
             throw new BusinessException(403, "비공개 컬렉션입니다.");
         }
@@ -116,6 +120,7 @@ public class CourseCollectionService {
 
         CourseCollection collection = courseCollectionRepository.findById(collectionId)
                 .orElseThrow(() -> new BusinessException(404, "컬렉션을 찾을 수 없습니다."));
+        // COL-P-006: 컬렉션 소유자만 코스를 추가할 수 있다.
         if (!ownerUserId.equals(collection.getOwnerUserId())) {
             throw new BusinessException(403, "컬렉션 소유자만 코스를 추가할 수 있습니다.");
         }
@@ -123,11 +128,13 @@ public class CourseCollectionService {
         Course course = courseRepository.findById(request.courseId())
                 .orElseThrow(() -> new BusinessException(404, "코스를 찾을 수 없습니다."));
 
+        // COL-P-007: 같은 컬렉션에는 같은 코스를 중복 추가할 수 없다.
         if (courseCollectionItemRepository.existsByCollectionIdAndCourseId(collectionId, request.courseId())) {
             throw new BusinessException(409, "이미 컬렉션에 담긴 코스입니다.");
         }
 
         Integer positionIndex = request.positionIndex();
+        // COL-P-008: positionIndex가 없거나 음수면 맨 뒤 순번으로 자동 배치한다.
         if (positionIndex == null || positionIndex < 0) {
             Integer maxPosition = courseCollectionItemRepository.findMaxPositionIndexByCollectionId(collectionId);
             positionIndex = (maxPosition == null ? -1 : maxPosition) + 1;

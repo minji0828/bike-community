@@ -1,91 +1,109 @@
-# MVP1 배포 런북 (EC2 + RDS + Nginx + Blue/Green Lite)
+# MVP1 배포 런북
 
-## 1. 사전 준비
-- EC2(Ubuntu) 1대, RDS(PostgreSQL) 1개
-- 도메인 + DNS A 레코드(EC2 공인 IP)
-- S3 버킷 1개(GPX 원문 저장)
-- EC2 설치
-  - Docker, Docker Compose v2
+- 작성일: 2026-03-11
+- 상태: 활성
+
+목적:
+
+- 현재 저장소 기준 배포 가능한 산출물과, 아직 별도 배포 체계가 필요한 모바일 앱을 구분한다.
+
+---
+
+## 1. 현재 저장소에서 배포되는 것
+
+- 백엔드: Spring Boot
+- 웹 클라이언트: `frontend/` Next.js 앱
+- 프록시: Nginx
+- 배포 방식: Docker Compose
+
+메모:
+
+- 제품의 1차 클라이언트는 모바일 앱이지만, 현재 저장소에는 모바일 소스가 없으므로 이 런북은 backend + web 배포만 다룬다.
+- 모바일 앱 배포는 추후 별도 릴리즈 문서로 분리한다.
+
+## 2. 사전 준비
+
+- EC2(Ubuntu) 1대
+- RDS(PostgreSQL) 1개
+- 도메인 + DNS A 레코드
+- S3 버킷 1개(GPX 원문 저장 시)
+- EC2 설치:
+  - Docker
+  - Docker Compose v2
   - Git, curl
 
-## 2. 서버 파일 구조(권장)
+## 3. 서버 파일 구조
+
 ```bash
 /opt/bike-project
   ├─ backend
-  ├─ deploy
-  └─ frontend/mobile/dist-web
+  ├─ frontend
+  └─ deploy
 ```
 
-## 3. 환경변수 파일 준비
+## 4. 환경변수 파일
+
 ```bash
 cd /opt/bike-project
 cp deploy/env/.env.prod.example deploy/env/.env.prod
-# 실제 값 채우기
 ```
 
 필수:
+
 - `SPRING_DATASOURCE_*`
 - `APP_JWT_SECRET`
 - `KAKAO_*`
 - `ADMIN_API_KEY`
 - `SEOUL_API_KEY`
-- `COURSE_GPX_STORAGE_MODE=s3`
-- `COURSE_GPX_S3_BUCKET`
-- `COURSE_GPX_S3_REGION`
+- `COURSE_GPX_STORAGE_MODE`
 
-권장:
-- EC2에 IAM Role 부여(S3 Put/Get 권한)
+## 5. 초기 기동
 
-## 4. 초기 기동
 ```bash
 cd /opt/bike-project
 chmod +x deploy/scripts/*.sh
-docker compose -f deploy/docker-compose.prod.yml up -d nginx backend-blue
+docker compose -f deploy/docker-compose.prod.yml up -d nginx backend-blue frontend-web
 echo blue > deploy/runtime/active_backend
 ```
 
-## 5. 백엔드 배포(Blue/Green)
+## 6. 백엔드 배포
+
 ```bash
 cd /opt/bike-project
 deploy/scripts/deploy_backend.sh
 ```
 
+## 7. 웹 프론트 배포
+
+```bash
+cd /opt/bike-project
+deploy/scripts/deploy_frontend.sh
+```
+
 동작:
-1) 비활성 색상 컨테이너 빌드/기동  
-2) `/api/v1/health` 체크  
-3) Nginx upstream 전환  
-4) reload
 
-## 6. 프론트 웹 배포
-```bash
-cd /opt/bike-project
-tar -czf /tmp/frontend-dist.tar.gz -C frontend/mobile dist-web
-deploy/scripts/deploy_frontend.sh /tmp/frontend-dist.tar.gz
-```
+1. `frontend/Dockerfile`로 Next.js 앱을 빌드한다.
+2. `frontend-web` 컨테이너를 재기동한다.
+3. Nginx 내부 health check로 `/api/health`를 확인한다.
 
-## 7. HTTPS 적용
-1) certbot으로 인증서 발급 (호스트에서 수행)
-2) `deploy/runtime/certs`에 인증서 경로 마운트 확인
-3) SSL conf 적용
-```bash
-cd /opt/bike-project
-deploy/scripts/enable_https.sh your.domain.com
-```
+## 8. HTTPS 적용
 
-## 8. 배포 확인
+1. certbot으로 인증서 발급
+2. `deploy/runtime/certs` 마운트 확인
+3. SSL conf 적용
+
+## 9. 배포 확인
+
 - `curl http://<domain>/api/v1/health`
 - 웹 접속: `https://<domain>/`
-- 코스/댓글/모임 API smoke 확인
-- GPX 조회 확인: `GET /api/v1/courses/{id}/gpx`
+- 공유 코스 열람 확인
+- 코스/라이딩 핵심 API smoke 확인
 
-## 9. GitHub Actions 수동 배포 사용법
-1) GitHub 저장소 → **Actions** → `Deploy Production (EC2)`
-2) **Run workflow** 클릭
-3) 입력값 선택
-   - `deploy_backend`: 백엔드 배포 여부
-   - `deploy_frontend`: 프론트 웹 배포 여부
-4) `production` 환경 보호 규칙(승인자)이 있으면 승인 후 실행
-5) 로그에서 다음 단계 확인
-   - EC2 파일 업로드
-   - `deploy_backend.sh` 실행 여부
-   - `deploy_frontend.sh` 실행 여부
+## 10. 모바일 배포 메모
+
+- 모바일 앱은 별도 스토어 배포 또는 내부 배포 체계를 가져야 한다.
+- 현재 repo에는 모바일 소스와 CI/CD가 없으므로, 모바일 착수 시 다음을 별도 정의한다.
+  - 빌드 채널(dev/staging/prod)
+  - 딥링크/redirectUri
+  - secure storage / env 관리
+  - 테스트플라이트 / 내부 테스트 트랙

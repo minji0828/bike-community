@@ -1,0 +1,57 @@
+databases:
+  - name: bikeoasis-db
+    databaseName: bikeoasis
+    user: bikeoasis
+    region: singapore
+    plan: basic-256mb
+
+services:
+  - type: web
+    name: bikeoasis-api
+    runtime: docker
+    region: singapore
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: RENDER_DATABASE_URL
+        fromDatabase:
+          name: bikeoasis-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: bikeoasis-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: bikeoasis-db
+          property: password
+      - key: SEOUL_API_KEY
+        sync: false
+      - key: APP_JWT_SECRET
+        generateValue: true
+      - key: APP_JWT_AUDIENCE
+        value: bikeoasis-mobile
+      - key: APP_CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: APP_CORS_ALLOWED_ORIGIN_PATTERNS
+        value: https://*.vercel.app
+      - key: APP_WEBSOCKET_ALLOWED_ORIGIN_PATTERNS
+        value: https://*.vercel.app
+      - key: KAKAO_REST_API_KEY
+        sync: false
+      - key: KAKAO_CLIENT_SECRET
+        sync: false
+      - key: KAKAO_ALLOWED_REDIRECT_URIS
+        sync: false
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: POI_FETCH_ONSTARTUP
+        value: "true"
+      - key: COURSE_SEED_GPX_ONSTARTUP
+        value: "true"
+      - key: COURSE_GPX_STORAGE_MODE
+        value: db

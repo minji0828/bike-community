@@ -15,6 +15,7 @@
 
 1. 전체 로컬 실행: `docs/로컬_개발_실행가이드.md`
 2. 설계/기획 기준: `설계/README.md`
+3. 외부 공개 테스트 계획: `docs/외부테스터_집에서_테스트_전체계획.md`
 
 ## 문서 체계
 
@@ -36,4 +37,4 @@ cd frontend && npm run check
 
 1. 로그인/채팅/코스 기본 흐름 안정화
 2. 문서와 코드의 단일 진실원천 정리
-3. Phase 1 확장 기능(Trip Collection + Highlights) 준비
+3. 외부 테스터 홈테스트 환경(Vercel + Render) 확보

@@ -108,6 +108,7 @@ export default function GuidePage() {
           return
         }
 
+        // POL-010: 30m 초과가 3회 연속 관측되면 off_route로 본다.
         if (isOffRoute(snapshot.distanceFromPathMeters, 30)) {
           offRouteCountRef.current += 1
           if (offRouteCountRef.current >= 3) {
@@ -122,6 +123,7 @@ export default function GuidePage() {
         }
       },
       (error) => {
+        // POL-009: 위치 권한이 없더라도 읽기 전용 가이드 상태로 복귀한다.
         if (error.code === error.PERMISSION_DENIED) {
           setLocationMessage('위치 권한이 없어 읽기 전용 가이드 상태로 전환했습니다.')
         } else {

@@ -39,6 +39,7 @@ public class CourseMeetupService {
 
     @Transactional
     public Long createMeetup(Long courseId, Long hostUserId, CourseMeetupCreateRequest request) {
+        // MTP-P-001, MTP-P-002: 모임 생성은 인증 사용자만 가능하며 초기 상태는 OPEN이다.
         validateCreateRequest(request);
 
         Course course = courseRepository.findById(courseId)
@@ -59,6 +60,7 @@ public class CourseMeetupService {
 
         CourseMeetup saved = courseMeetupRepository.save(meetup);
 
+        // MTP-P-003: host는 모임 생성과 동시에 참가자로 등록된다.
         courseMeetupParticipantRepository.save(CourseMeetupParticipant.builder()
                 .meetup(saved)
                 .user(hostUser)
@@ -72,6 +74,7 @@ public class CourseMeetupService {
             throw new BusinessException(404, "코스를 찾을 수 없습니다.");
         }
 
+        // MTP-P-008: 상태 필터 기본값은 OPEN이며 all일 때만 전체 조회한다.
         CourseMeetupStatus parsedStatus = parseStatus(status);
         List<CourseMeetup> meetups = courseMeetupRepository.findByCourseIdAndOptionalStatus(courseId, parsedStatus);
 
@@ -109,14 +112,17 @@ public class CourseMeetupService {
         CourseMeetup meetup = courseMeetupRepository.findByIdForUpdate(meetupId)
                 .orElseThrow(() -> new BusinessException(404, "모임을 찾을 수 없습니다."));
 
+        // MTP-P-004: OPEN 상태가 아니면 참가할 수 없다.
         if (meetup.getStatus() != CourseMeetupStatus.OPEN) {
             throw new BusinessException(409, "참여할 수 없는 모임 상태입니다.");
         }
 
+        // MTP-P-005: 동일 사용자의 중복 참가 요청은 idempotent 성공으로 본다.
         if (courseMeetupParticipantRepository.existsByMeetupIdAndUserId(meetupId, userId)) {
             return;
         }
 
+        // MTP-P-006: 정원이 설정된 모임은 현재 인원 이상이 되면 참가를 거절한다.
         Integer capacity = meetup.getCapacity();
         if (capacity != null && capacity > 0) {
             long participantCount = courseMeetupParticipantRepository.countByMeetupId(meetupId);
@@ -143,6 +149,7 @@ public class CourseMeetupService {
         CourseMeetup meetup = courseMeetupRepository.findByIdForUpdate(meetupId)
                 .orElseThrow(() -> new BusinessException(404, "모임을 찾을 수 없습니다."));
 
+        // MTP-P-007: 모임장은 leave할 수 없다.
         if (meetup.getHostUser().getId().equals(userId)) {
             throw new BusinessException(403, "모임장은 leave할 수 없습니다.");
         }
@@ -215,6 +222,7 @@ public class CourseMeetupService {
             throw new BusinessException(400, "startAt은 필수입니다.");
         }
 
+        // VAL-P-002: 시작 시각은 현재 이후이면서 180일 이내여야 한다.
         LocalDateTime now = LocalDateTime.now();
         if (request.getStartAt().isBefore(now.minusMinutes(5))) {
             throw new BusinessException(400, "startAt은 현재 시각 이후여야 합니다.");
@@ -223,6 +231,7 @@ public class CourseMeetupService {
             throw new BusinessException(400, "startAt은 180일 이내여야 합니다.");
         }
 
+        // VAL-P-003, VAL-P-004: meetingPointLat/lon은 쌍으로 전달되고 좌표 범위를 만족해야 한다.
         if ((request.getMeetingPointLat() == null) != (request.getMeetingPointLon() == null)) {
             throw new BusinessException(400, "meetingPointLat/lon은 함께 전달해야 합니다.");
         }
@@ -235,6 +244,7 @@ public class CourseMeetupService {
             }
         }
 
+        // VAL-P-005: capacity는 1 이상 100 이하만 허용한다.
         if (request.getCapacity() != null && request.getCapacity() < 1) {
             throw new BusinessException(400, "capacity는 1 이상이어야 합니다.");
         }

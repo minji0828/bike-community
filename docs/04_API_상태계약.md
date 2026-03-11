@@ -231,7 +231,28 @@ Response:
 - 저장된 토큰은 `/api/auth/me`로 재검증 후 확정한다.
 - 재검증 실패 시 즉시 anonymous 또는 error 상태로 전환한다.
 
-## 9. 변경 규칙
+## 9. MVP1 계측 이벤트 계약
+
+메모:
+
+- 이벤트 이름은 프론트와 백엔드가 공통으로 보는 계약이다.
+- 수집 도구는 나중에 바꿀 수 있지만, 이벤트 이름과 최소 속성은 문서 없이 임의 변경하지 않는다.
+- `shareId` 같은 민감 식별자는 외부 분석 도구에 raw 값으로 보내지 않고 해시 또는 내부 로그 전용으로 다룬다.
+
+| Event | 발생 위치 | 발생 조건 | 최소 속성 |
+|---|---|---|---|
+| `home_viewed` | frontend `/` | 홈 진입 완료 | `sessionId`, `isAuthenticated` |
+| `featured_course_clicked` | frontend `/` | featured 카드 클릭 | `courseId`, `position` |
+| `course_detail_viewed` | frontend `/course/[id]` | 상세 API 성공 후 상세 렌더링 | `courseId`, `entry` |
+| `guide_started` | frontend `/course/[id]/guide` | 사용자가 가이드를 시작 상태로 전환 | `courseId`, `entry` |
+| `guide_off_route_detected` | frontend `/course/[id]/guide` | `playing -> off_route` 전환 | `courseId`, `distanceFromPathMeters` |
+| `riding_save_requested` | frontend `/ride` | 저장 버튼 클릭 | `pointCount`, `hasToken` |
+| `riding_save_succeeded` | backend `POST /api/v1/ridings` | 라이딩 저장 성공 | `ridingId`, `userId` |
+| `course_created_from_riding` | backend `POST /api/v1/courses/from-riding` | 코스 생성 성공 | `courseId`, `ridingId`, `visibility` |
+| `course_share_issued` | backend `POST /api/v1/courses/{courseId}/share` | 공유 링크 발급 성공 | `courseId`, `visibility` |
+| `shared_course_opened` | frontend `/share/[shareId]` | 공유 코스 조회 성공 | `shareType`, `entry` |
+
+## 10. 변경 규칙
 
 - 새 API를 MVP1 핵심 경로에 넣으면 이 문서를 먼저 수정한다.
 - 상태값 이름을 바꾸면 프론트와 백엔드 코드를 함께 바꾸기 전에 이 문서를 먼저 수정한다.

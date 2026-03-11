@@ -24,6 +24,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // 테스트를 위해 CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
+                        // Policy refs:
+                        // AUTH-P-004 service JWT 보호 API
+                        // RID-P-001, CRS-P-001, SHR-P-001, COL-P-001, HLT-P-002, MTP-P-001
                         .requestMatchers(HttpMethod.POST, "/api/v1/ridings").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/courses/from-riding").authenticated()

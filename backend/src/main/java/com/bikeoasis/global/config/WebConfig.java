@@ -15,16 +15,34 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
     private String allowedOrigins;
 
+    @Value("${app.cors.allowed-origin-patterns:}")
+    private String allowedOriginPatterns;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(resolveAllowedOrigins())
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedOriginPatterns(resolveAllowedOriginPatterns())
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }
 
     private String[] resolveAllowedOrigins() {
         String[] values = StringUtils.commaDelimitedListToStringArray(allowedOrigins);
-        return values.length == 0 ? new String[]{"http://localhost:3000"} : values;
+        if (values.length == 0) {
+            return new String[]{"http://localhost:3000"};
+        }
+        return java.util.Arrays.stream(values)
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .toArray(String[]::new);
+    }
+
+    private String[] resolveAllowedOriginPatterns() {
+        String[] values = StringUtils.commaDelimitedListToStringArray(allowedOriginPatterns);
+        return java.util.Arrays.stream(values)
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .toArray(String[]::new);
     }
 }

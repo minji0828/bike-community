@@ -46,6 +46,7 @@ public class AuthService {
 
     @Transactional
     public AuthTokenResponse loginWithKakao(KakaoLoginRequest request) {
+        // AUTH-P-001, AUTH-P-003: 카카오 로그인은 Authorization Code + PKCE를 기본으로 하고 허용된 redirectUri만 받는다.
         if (request == null || request.code() == null || request.code().isBlank()) {
             throw new BusinessException(400, "code는 필수입니다.");
         }
@@ -60,6 +61,7 @@ public class AuthService {
             throw new BusinessException(500, "서버 Kakao client-id 설정이 필요합니다.");
         }
 
+        // AUTH-P-002: 서버가 카카오 code 교환과 id_token 검증을 수행한다.
         KakaoTokenResponse tokenResponse = kakaoAuthClient.exchangeCodeForToken(
                 request.code(),
                 request.codeVerifier(),
@@ -111,6 +113,7 @@ public class AuthService {
             user.setUsername(resolvedUsername);
         }
 
+        // AUTH-P-004: 일반 API용으로는 provider token이 아니라 서비스 JWT를 발급한다.
         String accessToken = appTokenService.issueAccessToken(user.getId(), user.getUsername(), accessTokenExpSeconds);
         return new AuthTokenResponse(accessToken, accessTokenExpSeconds);
     }
