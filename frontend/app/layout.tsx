@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/components/auth/auth-provider'
 import './globals.css'
 
@@ -31,13 +30,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const shouldRenderAnalytics = process.env.NODE_ENV === 'production'
-
   return (
     <html lang="ko">
       <body className="font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
-        {shouldRenderAnalytics ? <Analytics /> : null}
       </body>
     </html>
   )
