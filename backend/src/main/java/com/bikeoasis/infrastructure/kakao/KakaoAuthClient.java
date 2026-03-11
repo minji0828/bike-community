@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -60,9 +61,17 @@ public class KakaoAuthClient {
                 throw new BusinessException(401, "Kakao 토큰 교환에 실패했습니다.");
             }
             return response.getBody();
+        } catch (HttpStatusCodeException e) {
+            log.error(
+                    "Kakao token exchange failed: status={}, redirectUri={}, response={}",
+                    e.getStatusCode(),
+                    redirectUri,
+                    e.getResponseBodyAsString()
+            );
+            throw new BusinessException(401, "Kakao 토큰 교환에 실패했습니다. Redirect URI, OpenID Connect, Client Secret 설정을 확인하세요.");
         } catch (RestClientException e) {
-            log.error("Kakao token exchange failed", e);
-            throw new BusinessException(401, "Kakao 토큰 교환에 실패했습니다.");
+            log.error("Kakao token exchange failed: redirectUri={}", redirectUri, e);
+            throw new BusinessException(401, "Kakao 토큰 교환에 실패했습니다. 네트워크 또는 Kakao 인증 설정을 확인하세요.");
         }
     }
 }
