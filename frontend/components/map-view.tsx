@@ -132,7 +132,11 @@ export function MapView({
       })
       .catch((error) => {
         if (!cancelled) {
-          setLoadError(error instanceof Error ? error.message : '카카오 지도 SDK를 불러오지 못했습니다.')
+          const origin = typeof window !== 'undefined' ? window.location.origin : ''
+          const baseMessage = error instanceof Error ? error.message : '카카오 지도 SDK를 불러오지 못했습니다.'
+          setLoadError(
+            `${baseMessage} Kakao Developers의 JS SDK 도메인에 ${origin} 등록 여부와 NEXT_PUBLIC_KAKAO_MAP_JS_KEY를 확인해주세요.`
+          )
         }
       })
 
